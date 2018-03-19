@@ -64,7 +64,7 @@ class BatchEngine {
 		this.insertLookup = insertLookup.getLookup();
 		minimumTrayVolume = postConfig.getUkmMinimumTrayVolume();
 		maxTraySize = (double) ProductionConfiguration.getInstance().getTraySize();
-		maxTrayWeight = (double) appConfig.getMaxWeight();
+		maxTrayWeight = (double) postConfig.getMaxTrayWeight();
 		ukmBatchTypes = postConfig.getUkmBatchTypes();
 	}
 
@@ -218,6 +218,7 @@ class BatchEngine {
 			double averageSize = totalSize / numberOfTrays;
 			// If averages are above limit we need an extra tray :(
 			if (averageWeight > maxTrayWeight || averageSize > maxTraySize) numberOfTrays++;
+			// We use ceiling to avoid the possiblity of having a tray with 1 item
 			int averageItems = (int) Math.ceil(totalItems / numberOfTrays);
 
 			// Weight & Size OK, so unpack all trays into temp array
@@ -225,7 +226,7 @@ class BatchEngine {
 			trays.forEach(tray -> temp.addAll(tray.getList()));
 			// clear SOT markers for every customer
 			temp.forEach(customer -> customer.clearSot());
-			// set SOT at average
+			// Set SOT according to the computed average
 			int counter = 0;
 			for (Customer customer : temp) {
 				if (counter % averageItems == 0) {

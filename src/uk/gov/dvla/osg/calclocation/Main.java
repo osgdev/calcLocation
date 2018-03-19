@@ -44,7 +44,7 @@ public class Main {
 		assignArgs(args);
 		// load the Application Configuration file
 		LOGGER.trace("Loading AppConfig...");
-		AppConfig appConfig = loadPropertiesFile();
+		AppConfig appConfig = new AppConfig(propsFile);
 		// load customers from dpf file
 		LOGGER.trace("Initialising DPF Parser...");
 		DpfParser dpf = new DpfParser(inputFile, outputFile, appConfig);
@@ -126,11 +126,11 @@ public class Main {
 		tenDigitJid = Integer.parseInt(args[5]);
 	}
 
-	private static AppConfig loadPropertiesFile() throws Exception {
+/*	private static AppConfig loadPropertiesFile() throws Exception {
 		ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 		mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
 		return mapper.readValue(new File(propsFile), AppConfig.class);
-	}
+	}*/
 
 	private static void loadLookupFiles(AppConfig appConfig, ArrayList<Customer> customers) throws Exception {
 		String selectorRef = getSelectorRef(customers);
