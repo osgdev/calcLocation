@@ -98,7 +98,7 @@ public class Main {
 		sortCustomers(customers, new CustomerComparatorOriginalOrder());
 		// Dpf saves the changed details to the output file
 		LOGGER.trace("Saving DPF file...");
-		dpf.Save(customers);
+		dpf.Save(customers, insertLookup);
 	}
 
 	private static void assignArgs(String[] args) {

@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -79,7 +78,8 @@ class BatchEngine {
 		int customerIndex = 0;
 		pageCount = 0;
 		boolean firstCustomer = true;
-		Customer prev = ukMailCustomers.get(0);
+		Customer prev = ukMailCustomers.isEmpty() ? null : ukMailCustomers.get(0);
+
 
 		for (Customer customer : ukMailCustomers) {
 			batchMax = getBatchMax(customer.getFullBatchType(), customer.getPaperSize());
@@ -113,7 +113,7 @@ class BatchEngine {
 			prev = customer;
 			customerIndex++;
 		}
-
+		
 		// Loop through nonUkMailCustomers
 		firstCustomer = true;
 		prev = nonUkMailCustomers.get(0);
@@ -129,18 +129,19 @@ class BatchEngine {
 			} else if (!prev.equals(customer) || customer.getNoOfPages() + pageCount > batchMax) {
 				customer.setSob();
 				pageCount = customer.getNoOfPages();
+				prev.setEog();
 			} else {
 				pageCount += customer.getNoOfPages();
 			}
 			prev = customer;
 		}
-
 		Collections.sort(customers, new CustomerComparatorWithLocation());
 
 		int pid = 1;
 		int batchSequence = 0;
 		for (Customer customer : customers) {
 			if (customer.isSob()) {
+
 				pid = 1;
 				batchSequence++;
 				tenDigitJid += jidInc;
@@ -152,7 +153,7 @@ class BatchEngine {
 
 			pid++;
 		}
-
+		
 	}
 
 	private ArrayList<Tray> setTraysForMsc(int startIndex, int endIndex) {
@@ -195,15 +196,21 @@ class BatchEngine {
 	}
 
 	private void adjustTrays(ArrayList<Tray> trays) {
+		
 		int numberOfTrays = trays.size();
-		AtomicBoolean adjust = new AtomicBoolean(false);
+		boolean adjust = false;
 
 		// check if any Tray is below minimum size
-		trays.forEach(tray -> {
-			if (tray.getNoItems() < minimumTrayVolume) adjust.set(true);
-		});
+		//int i = 1;
+		for (Tray tray : trays) {
+			//LOGGER.debug("{} : {} {}",i, tray.getList().get(0).getMsc(), tray.getNoItems());
+			//i++;
+			if (tray.getNoItems() < minimumTrayVolume) {
+				adjust =true;
+			}
+		}
 
-		if (adjust.get()) {
+		if (adjust) {
 			double totalWeight = 0;
 			double totalSize = 0;
 			double totalItems = 0;
@@ -230,14 +237,13 @@ class BatchEngine {
 			int counter = 0;
 			for (Customer customer : temp) {
 				if (counter % averageItems == 0) {
-					customer.setSot("X");
+					customer.setSot();
 				}
 				if (customer.isSob()) {
 					// Tray has SOB mid-way through, move to start of tray
+					customer.clearSob();
 					int sot = counter - (counter % averageItems);
 					temp.get(sot).setSob();
-					// Clear SOB marker from current item
-					customer.clearSob();
 				}
 				counter++;
 			}
@@ -253,7 +259,6 @@ class BatchEngine {
 						trays.get(trayIdx).getList().get(0).setSob();
 						// Re-set Page Count
 						pageCount = 0;
-						
 					}
 				}
 				if (restartPageCount) {
@@ -265,42 +270,42 @@ class BatchEngine {
 			}
 		}
 	}
-	
+
 	private void adjustMultis(ArrayList<Customer> allCustomers) {
-		long start = System.nanoTime();
 		for (Customer customer : allCustomers) {
 			double weight = 0;
 			double size = 0;
-			if (BatchType.MULTI.equals(customer.getBatchType()) && mscLookup.get(customer.getTransactionID()) >= minimumTrayVolume) {
-					if (!customer.isEog()) {
-						weight += customer.getWeight();
-						size += customer.getThickness();
+			if (BatchType.MULTI.equals(customer.getBatchType())
+					&& mscLookup.get(customer.getTransactionID()) >= minimumTrayVolume) {
+				if (!customer.isEog()) {
+					weight += customer.getWeight();
+					size += customer.getThickness();
+				} else {
+					// change envelope
+					if (customer.getLang().equals(Language.E)) {
+						customer.setEnvelope(ProductionConfiguration.getInstance().getEnvelopeEnglishMm());
 					} else {
-						// change envelope
-						if (customer.getLang().equals(Language.E)) {
-							customer.setEnvelope(ProductionConfiguration.getInstance().getEnvelopeEnglishMm());
-						} else {
-							customer.setEnvelope(ProductionConfiguration.getInstance().getEnvelopeWelshMm());
-						}
-						double envelopeSize = envelopeLookup.get(customer.getEnvelope()).getThickness();
-						double envelopeWeight = envelopeLookup.get(customer.getEnvelope()).getWeight();
-						float insertSize = 0;
-						float insertWeight = 0;
-						if (!customer.getInsertRef().isEmpty()) {
-							insertSize = insertLookup.get(customer.getInsertRef()).getThickness();
-							insertWeight = insertLookup.get(customer.getInsertRef()).getWeight();
-						}
-						customer.setWeight(customer.getWeight() + weight + envelopeWeight + insertWeight);
-						customer.setThickness(customer.getThickness() + size + envelopeSize + insertSize);
-
+						customer.setEnvelope(ProductionConfiguration.getInstance().getEnvelopeWelshMm());
 					}
+					double envelopeSize = envelopeLookup.get(customer.getEnvelope()).getThickness();
+					double envelopeWeight = envelopeLookup.get(customer.getEnvelope()).getWeight();
+					float insertSize = 0;
+					float insertWeight = 0;
+					if (!customer.getInsertRef().isEmpty()) {
+						insertSize = insertLookup.get(customer.getInsertRef()).getThickness();
+						insertWeight = insertLookup.get(customer.getInsertRef()).getWeight();
+					}
+					customer.setWeight(customer.getWeight() + weight + envelopeWeight + insertWeight);
+					customer.setThickness(customer.getThickness() + size + envelopeSize + insertSize);
+
+				}
 			} else if (customer.getBatchType().equals(BatchType.MULTI)) {
 				if (customer.getLang().equals(Language.E)) {
-				if (!prodConfig.getSite(SORTEDE).equals("X")) {
-					customer.setBatchType(SORTED);
-				} else {
-					customer.setBatchType(UNSORTED);
-				}
+					if (!prodConfig.getSite(SORTEDE).equals("X")) {
+						customer.setBatchType(SORTED);
+					} else {
+						customer.setBatchType(UNSORTED);
+					}
 				} else {
 					if (!prodConfig.getSite(SORTEDW).equals("X")) {
 						customer.setBatchType(SORTED);
@@ -330,14 +335,12 @@ class BatchEngine {
 				customer.setSite(ProductionConfiguration.getInstance().getSite(customer.getFullBatchType()));
 			}
 		}
-		double seconds = (System.nanoTime() - start) / 1000000000.0;
-		LOGGER.debug("Speed of Adjust Multis : {}", seconds);
 	}
 
 	private void filterCustomers(ArrayList<Customer> allCustomers) {
-		long start = System.nanoTime();
 		for (Customer customer : allCustomers) {
-			if (!customer.getBatchType().equals(BatchType.UNSORTED) && ukmBatchTypes.contains(customer.getBatchName())) {
+			if (!customer.getBatchType().equals(BatchType.UNSORTED)
+					&& ukmBatchTypes.contains(customer.getBatchName())) {
 				if (mscLookup.get(customer.getTransactionID()) < minimumTrayVolume) {
 					// MSCS are under minimum tray volume so move to unsorted list
 					customer.setBatchType(BatchType.UNSORTED);
@@ -361,27 +364,23 @@ class BatchEngine {
 				nonUkMailCustomers.add(customer);
 			}
 		}
-		double seconds = (System.nanoTime() - start) / 1000000000.0;
-		LOGGER.debug("Speed of Filter Customers : {}", seconds);
 	}
 
 	private void countMscs(ArrayList<Customer> input) {
 		// Calculate the start time
-		long start = System.nanoTime();
 		int transactionID = 1;
 		int groupCount = 0;
 		Customer prev = input.get(0);
 		for (Customer customer : input) {
 			// Check if customer has an MSC
-			if (StringUtils.isNotBlank(customer.getMsc()) 
-					&& !customer.getBatchType().equals(BatchType.UNSORTED) 
+			if (StringUtils.isNotBlank(customer.getMsc()) && !customer.getBatchType().equals(BatchType.UNSORTED)
 					&& ukmBatchTypes.contains(customer.getBatchName())) {
 
-					if (!customer.equals(prev) || !customer.getMsc().equals(prev.getMsc())) {
-						transactionID++;
-						groupCount = 0;
-					}
-					
+				if (!customer.equals(prev) || !customer.getMsc().equals(prev.getMsc())) {
+					transactionID++;
+					groupCount = 0;
+				}
+
 				// Add result to lookup map
 				if (customer.isEog()) {
 					groupCount++;
@@ -391,8 +390,6 @@ class BatchEngine {
 				prev = customer;
 			}
 		}
-		double seconds = (System.nanoTime() - start) / 1000000000.0;
-		LOGGER.debug("Speed of Count Mscs : {}", seconds);
 	}
 
 	private int getBatchMax(FullBatchType fullBatchType, String paperSize) {

@@ -2,16 +2,33 @@
 
 <Configuration>
 
-     <Appenders>
-       <Console name="console" target="SYSTEM_OUT">
-         <PatternLayout pattern="%d{dd-MM-yy HH:mm:ss} [%-5level] %c{3} - %msg%ex{short}%n" />
-       </Console>
-    </Appenders>
-    
-    <Loggers>
-        <Root level="all">
-			<AppenderRef ref="console" level="all"/>
-        </Root>
-    </Loggers>
+	<Properties>
+		<Property name="basePath">C:/logs/</Property>
+		<Property name="fileName">Martin</Property>
+	</Properties>
+
+	<Appenders>
+		<Console name="console" target="SYSTEM_OUT">
+			<PatternLayout pattern="%d{dd-MM-yy HH:mm:ss} [%-5level] %c{33} - %msg%ex{short}%n" />
+		</Console>
+		<RollingFile name="rollingFile">
+			<FileName>${basePath}${fileName}.log</FileName>
+			<FilePattern>${basePath}${fileName}-%d{yyyy-MM-dd}.log</FilePattern>
+			<PatternLayout pattern="%d{dd-MM-yyyy HH:mm:ss} [%-5level] %c{23} - %msg%n" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="10 MB" />
+			</Policies>
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+	</Appenders>
+
+	<Loggers>
+		<Logger name="uk.gov.dvla.osg" level="all">
+			<AppenderRef ref="rollingFile" level="all" />
+		</Logger>
+		<Root level="all">
+			<AppenderRef ref="console" level="all" />
+		</Root>
+	</Loggers>
     
 </Configuration>

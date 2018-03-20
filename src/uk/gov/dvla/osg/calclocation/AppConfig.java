@@ -53,8 +53,8 @@ class AppConfig {
 		appNameField = prop.getProperty("appNameField");
 		weightAndSizeField = prop.getProperty("weightAndSizeField");
 		siteFieldName = prop.getProperty("siteFieldName");
-		eightDigitJobIdFieldName = prop.getProperty("eightDigitJobIdFieldName");
-		tenDigitJobIdFieldName = prop.getProperty("tenDigitJobIdFieldName");
+		eightDigitJobIdFieldName = prop.getProperty("jobIdFieldName");
+		tenDigitJobIdFieldName = prop.getProperty("tenDigitJobId");
 		mailMarkBarcodeContent = prop.getProperty("mailMarkBarcodeContent");
 		eogField = prop.getProperty("eogField");
 		eotField = prop.getProperty("eotField");
