@@ -5,12 +5,13 @@ import java.util.Comparator;
 import uk.gov.dvla.osg.common.classes.Customer;
 
 public class CustomerComparatorWithLocation implements Comparator<Customer> {
-
 	@Override
 	public int compare(Customer o1, Customer o2) {
 		/*
-		 * SORT ORDER IS: LOCATION -> LANGUAGE -> STATIONERY -> PRESENTATION_ORDER -> SUB_BATCH -> SORT_FIELD -> FLEET_NO -> MSC -> GRP_ID
+		 * SORT ORDER IS: LOCATION -> LANGUAGE -> STATIONERY -> PRESENTATION_ORDER -> SUB_BATCH -> 
+		 * SORT_FIELD -> FLEET_NO -> MSC -> GRP_ID
 		 */
+
 
 		// First by LOCATION - stop if this gives a result.
 		int locationResult = o1.getSite().compareTo(o2.getSite());
@@ -31,7 +32,6 @@ public class CustomerComparatorWithLocation implements Comparator<Customer> {
 		}
 
 		// Next by PRESENTATION_ORDER - stop if this gives a result.
-
 		if (o1.getPresentationPriority() != null && o2.getPresentationPriority() != null) {
 			int presResult = o1.getPresentationPriority().compareTo(o2.getPresentationPriority());
 			if (presResult != 0) {
@@ -52,6 +52,7 @@ public class CustomerComparatorWithLocation implements Comparator<Customer> {
 		if (sortFieldResult != 0) {
 			return sortFieldResult;
 		}
+		
 		// Next by FLEET_NO
 		int fleetResult = o1.getFleetNo().compareTo(o2.getFleetNo());
 		if (fleetResult != 0) {
@@ -64,10 +65,9 @@ public class CustomerComparatorWithLocation implements Comparator<Customer> {
 			return mscResult;
 		}
 
-		// Finally by GRP_ID
-		if (o1.getGroupId() != null && o2.getGroupId() != null) {
-			return o1.getGroupId().compareTo(o2.getGroupId());
-		}
-		return 0;
+		// Finally by GRP_ID - unbox to int to overcome strange limitations with Integer
+		int i = o1.getGroupId() != null ? o1.getGroupId() : 0;
+		int j = o2.getGroupId() != null ? o2.getGroupId() : 0;
+		return i < j ? -1 : (i == j ? 0 : 1);	
 	}
 }

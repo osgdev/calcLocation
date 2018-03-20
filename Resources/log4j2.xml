@@ -11,20 +11,14 @@
 		<Console name="console" target="SYSTEM_OUT">
 			<PatternLayout pattern="%d{dd-MM-yy HH:mm:ss} [%-5level] %c{33} - %msg%ex{short}%n" />
 		</Console>
-		<RollingFile name="rollingFile">
-			<FileName>${basePath}${fileName}.log</FileName>
-			<FilePattern>${basePath}${fileName}-%d{yyyy-MM-dd}.log</FilePattern>
-			<PatternLayout pattern="%d{dd-MM-yyyy HH:mm:ss} [%-5level] %c{23} - %msg%n" />
-			<Policies>
-				<SizeBasedTriggeringPolicy size="10 MB" />
-			</Policies>
-			<DefaultRolloverStrategy max="10" />
-		</RollingFile>
+		<File name="MyFile" fileName="C:/logs/Martin.log" immediateFlush="false" append="false">
+            <PatternLayout pattern="%d{dd-MM-yyyy HH:mm:ss} [%-5level] %c{23} - %msg%n" />
+        </File>
 	</Appenders>
 
 	<Loggers>
 		<Logger name="uk.gov.dvla.osg" level="all">
-			<AppenderRef ref="rollingFile" level="all" />
+			<AppenderRef ref="MyFile" level="all" />
 		</Logger>
 		<Root level="all">
 			<AppenderRef ref="console" level="all" />

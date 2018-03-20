@@ -77,7 +77,6 @@ class DpfParser {
 			customer.setPostcode(record.getString(appConfig.getPostCodeField()));
 			
 			customer.setDps(record.getString(appConfig.getDpsField()));
-			customer.setInsertRef(record.getString(appConfig.getInsertField()));
 			customer.setMmCustomerContent(record.getString(appConfig.getMailMarkBarcodeContent()));
 			customer.setNoOfPages(record.getInt(appConfig.getNoOfPagesField()));
 			//customer.setSot(record.getString(appConfig.getEotField()));
@@ -144,7 +143,6 @@ class DpfParser {
 					LOGGER.fatal("SOT Field {}", appConfig.getEotField());
 				}
 				try {
-					LOGGER.debug("|{}|",customer.getMmBarcodeContent());
 					writer.addValue(appConfig.getMailMarkBarcodeContent(), customer.getMmBarcodeContent());
 				} catch (Exception ex) {
 					LOGGER.fatal("MailMarkBarcodeContent {}", appConfig.getMailMarkBarcodeContent());
@@ -175,11 +173,6 @@ class DpfParser {
 					LOGGER.fatal("Total Number Of Pages In Group Field {}", appConfig.getTotalNumberOfPagesInGroupField());
 				}
 				try {
-					writer.addValue(appConfig.getInsertHopperCodeField(), customer.getInsertRef());
-				} catch (Exception ex) {
-					LOGGER.fatal("Insert Hopper Code {}", appConfig.getInsertHopperCodeField());
-				}
-				try {
 					writer.addValue(appConfig.getMscFieldName(), customer.getMsc());
 				} catch (Exception ex) {
 					LOGGER.fatal("MSC {}", appConfig.getMscFieldName());
@@ -204,7 +197,6 @@ class DpfParser {
 			});
 			// Flushes and closes the writer
 			writer.close();
-			LOGGER.trace("Done!");
 		}
 	}		
 	
