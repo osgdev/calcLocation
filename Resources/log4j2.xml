@@ -2,23 +2,20 @@
 
 <Configuration>
 
-	<Properties>
-		<Property name="basePath">C:/logs/</Property>
-		<Property name="fileName">Martin</Property>
-	</Properties>
-
 	<Appenders>
 		<Console name="console" target="SYSTEM_OUT">
-			<PatternLayout pattern="%d{dd-MM-yy HH:mm:ss} [%-5level] %c{33} - %msg%ex{short}%n" />
+			<PatternLayout pattern="%d{dd-MM-yy HH:mm:ss} [%-5level] %c{3} - %msg%ex{short}%n" />
 		</Console>
-		<File name="MyFile" fileName="C:/logs/Martin.log" immediateFlush="false" append="false">
-            <PatternLayout pattern="%d{dd-MM-yyyy HH:mm:ss} [%-5level] %c{23} - %msg%n" />
-        </File>
+       <File name="file">
+         <Append>false</Append>
+         <FileName>c:/logs/location.log</FileName>
+         <PatternLayout pattern="%d{dd-MM-yyyy HH:mm:ss} [%-5level] %c{3} - %msg%ex{short}%n" />
+       </File>
 	</Appenders>
 
 	<Loggers>
 		<Logger name="uk.gov.dvla.osg" level="all">
-			<AppenderRef ref="MyFile" level="all" />
+			<AppenderRef ref="file" level="all" />
 		</Logger>
 		<Root level="all">
 			<AppenderRef ref="console" level="all" />

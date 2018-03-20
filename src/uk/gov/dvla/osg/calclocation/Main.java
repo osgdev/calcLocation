@@ -83,10 +83,7 @@ public class Main {
 		 */
 		LOGGER.trace("Sorting input...");
 		sortCustomers(customers, new CustomerComparatorWithLocation());
-		for (Customer c : customers) {
-			LOGGER.debug("{}|{}|{}|{}|{}|{}|{}|{}|{}|", c.getSite(), c.getLang(), c.getStationery(), c.getPresentationPriority(),
-					c.getSubBatch(), c.getSortField(), c.getFleetNo(), c.getMsc(), c.getGroupId());
-		}
+
 		// Putting into batches that are above the 25 tray minimum
 		LOGGER.trace("Running Batch Engine...");
 		BatchEngine be = new BatchEngine(postageConfig, tenDigitJid, eightDigitJid, appConfig, pl, envelopeLookup, insertLookup);

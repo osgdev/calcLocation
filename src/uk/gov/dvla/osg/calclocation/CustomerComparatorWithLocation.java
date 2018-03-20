@@ -12,7 +12,6 @@ public class CustomerComparatorWithLocation implements Comparator<Customer> {
 		 * SORT_FIELD -> FLEET_NO -> MSC -> GRP_ID
 		 */
 
-
 		// First by LOCATION - stop if this gives a result.
 		int locationResult = o1.getSite().compareTo(o2.getSite());
 		if (locationResult != 0) {
