@@ -105,6 +105,7 @@ class DpfParser {
 			// Create an instance of TsvWriter with the default settings
 			TsvWriterSettings tsvwSettings = new TsvWriterSettings();
 			tsvwSettings.setNullValue("");
+			tsvwSettings.setIgnoreTrailingWhitespaces(false);
 			TsvWriter writer = new TsvWriter(fw, tsvwSettings);
 			// Writes the file headers
 			writer.writeHeaders(headers);
@@ -143,6 +144,7 @@ class DpfParser {
 					LOGGER.fatal("SOT Field {}", appConfig.getEotField());
 				}
 				try {
+					LOGGER.debug("|{}|",customer.getMmBarcodeContent());
 					writer.addValue(appConfig.getMailMarkBarcodeContent(), customer.getMmBarcodeContent());
 				} catch (Exception ex) {
 					LOGGER.fatal("MailMarkBarcodeContent {}", appConfig.getMailMarkBarcodeContent());
