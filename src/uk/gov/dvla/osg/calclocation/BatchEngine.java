@@ -13,11 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import uk.gov.dvla.osg.calclocation.models.Tray;
-import uk.gov.dvla.osg.common.classes.BatchType;
-import uk.gov.dvla.osg.common.classes.Customer;
-import uk.gov.dvla.osg.common.classes.FullBatchType;
-import uk.gov.dvla.osg.common.classes.Language;
-import uk.gov.dvla.osg.common.classes.Product;
+import uk.gov.dvla.osg.common.classes.*;
 import uk.gov.dvla.osg.common.config.EnvelopeLookup;
 import uk.gov.dvla.osg.common.config.InsertLookup;
 import uk.gov.dvla.osg.common.config.PapersizeLookup;
@@ -36,7 +32,7 @@ class BatchEngine {
 	private int minimumTrayVolume;
 
 	private String ukmBatchTypes;
-	private HashMap<String, PapersizeLookup> papersizeLookup;
+	private HashMap<String, PaperSize> papersizeLookup;
 	private double maxTraySize;
 	private double maxTrayWeight;
 	private int batchMax;
@@ -45,26 +41,25 @@ class BatchEngine {
 	private ArrayList<Customer> nonUkMailCustomers = new ArrayList<>();
 	private PresentationConfiguration presentationConfig;
 	private Map<Integer, Integer> mscLookup = new HashMap<>();
-	private HashMap<String, InsertLookup> insertLookup;
-	private HashMap<String, EnvelopeLookup> envelopeLookup;
+	private HashMap<String, Insert> insertLookup;
+	private HashMap<String, Envelope> envelopeLookup;
 	private ProductionConfiguration prodConfig;
 
-	BatchEngine(PostageConfiguration postConfig, int tenDigitJid, int eightDigitJid, AppConfig appConfig,
-			PapersizeLookup pl, EnvelopeLookup envelopeLookup, InsertLookup insertLookup) {
+	BatchEngine(int tenDigitJid, int eightDigitJid, AppConfig appConfig) {
 
 		LOGGER.trace("Starting Batch Engine");
-		this.prodConfig = ProductionConfiguration.getInstance();
-		this.presentationConfig = PresentationConfiguration.getInstance();
-		this.papersizeLookup = pl.getLookup();
+		prodConfig = ProductionConfiguration.getInstance();
+		presentationConfig = PresentationConfiguration.getInstance();
+		papersizeLookup = PapersizeLookup.getInstance().getLookup();
+		envelopeLookup = EnvelopeLookup.getInstance().getLookup();
+		insertLookup = InsertLookup.getInstance().getLookup();
+		minimumTrayVolume = PostageConfiguration.getInstance().getUkmMinimumTrayVolume();
+		maxTraySize = ProductionConfiguration.getInstance().getTraySize();
+		maxTrayWeight = PostageConfiguration.getInstance().getMaxTrayWeight();
+		ukmBatchTypes = PostageConfiguration.getInstance().getUkmBatchTypes();
+		jidInc = appConfig.getTenDigitJobIdIncrementValue();
 		this.eightDigitJid = eightDigitJid;
 		this.tenDigitJid = tenDigitJid;
-		this.jidInc = appConfig.getTenDigitJobIdIncrementValue();
-		this.envelopeLookup = envelopeLookup.getLookup();
-		this.insertLookup = insertLookup.getLookup();
-		minimumTrayVolume = postConfig.getUkmMinimumTrayVolume();
-		maxTraySize = (double) ProductionConfiguration.getInstance().getTraySize();
-		maxTrayWeight = (double) postConfig.getMaxTrayWeight();
-		ukmBatchTypes = postConfig.getUkmBatchTypes();
 	}
 
 	public void batch(ArrayList<Customer> customers) {
@@ -286,8 +281,8 @@ class BatchEngine {
 					}
 					double envelopeSize = envelopeLookup.get(customer.getEnvelope()).getThickness();
 					double envelopeWeight = envelopeLookup.get(customer.getEnvelope()).getWeight();
-					float insertSize = 0;
-					float insertWeight = 0;
+					double insertSize = 0;
+					double insertWeight = 0;
 					if (!customer.getInsertRef().isEmpty()) {
 						insertSize = insertLookup.get(customer.getInsertRef()).getThickness();
 						insertWeight = insertLookup.get(customer.getInsertRef()).getWeight();
@@ -321,8 +316,8 @@ class BatchEngine {
 				}
 				double envelopeSize = envelopeLookup.get(customer.getEnvelope()).getThickness();
 				double envelopeWeight = envelopeLookup.get(customer.getEnvelope()).getWeight();
-				float insertSize = 0;
-				float insertWeight = 0;
+				double insertSize = 0;
+				double insertWeight = 0;
 				if (!customer.getInsertRef().isEmpty()) {
 					insertSize = insertLookup.get(customer.getInsertRef()).getThickness();
 					insertWeight = insertLookup.get(customer.getInsertRef()).getWeight();

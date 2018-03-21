@@ -8,12 +8,8 @@ import java.util.Comparator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-
 import uk.gov.dvla.osg.common.classes.Customer;
+import uk.gov.dvla.osg.common.classes.Selector;
 import uk.gov.dvla.osg.common.config.EnvelopeLookup;
 import uk.gov.dvla.osg.common.config.InsertLookup;
 import uk.gov.dvla.osg.common.config.PapersizeLookup;
@@ -28,14 +24,11 @@ public class Main {
 	private static final Logger LOGGER = LogManager.getLogger();
 	//private static AppConfig appConfig;
 	private static final int EXPECTED_NO_OF_ARGS = 6;
-	private static PostageConfiguration postageConfig;
 	//Argument Strings
 	private static String inputFile, outputFile, propsFile, runNo;
-	static int tenDigitJid;
-	static int eightDigitJid;
-	private static InsertLookup insertLookup;
-	private static EnvelopeLookup envelopeLookup;
-
+	private static int tenDigitJid;
+	private static int eightDigitJid;
+	
 	public static void main(String[] args) throws Exception {
 
 		LOGGER.info("Starting uk.gov.dvla.osg.batch.Main");
@@ -53,12 +46,9 @@ public class Main {
 		// Load Selector Lookup & Production Config files
 		LOGGER.trace("Loading Lookup Files...");
 		loadLookupFiles(appConfig, customers);
-		PapersizeLookup pl = new PapersizeLookup(appConfig.getPapersizeLookup());
-		
 		// Sort Order: Language -> Presentation Priority
 		LOGGER.trace("Sorting input...");
 		sortCustomers(customers, new CustomerComparator());
-		
 		// Calculate sites for every customer
 		LOGGER.trace("Starting CalcLocation...");
 		LocationCalculator calculateLocation = new LocationCalculator();
@@ -71,7 +61,6 @@ public class Main {
 		 */
 		LOGGER.trace("Sorting input...");
 		sortCustomers(customers, new CustomerComparatorWithLocation());
-		
 		// Calculate EOGs ready for the batch engine
 		LOGGER.trace("Calculating EOGs...");
 		CalculateEndOfGroups eogs = new CalculateEndOfGroups();
@@ -83,14 +72,13 @@ public class Main {
 		 */
 		LOGGER.trace("Sorting input...");
 		sortCustomers(customers, new CustomerComparatorWithLocation());
-
 		// Putting into batches that are above the 25 tray minimum
 		LOGGER.trace("Running Batch Engine...");
-		BatchEngine be = new BatchEngine(postageConfig, tenDigitJid, eightDigitJid, appConfig, pl, envelopeLookup, insertLookup);
+		BatchEngine be = new BatchEngine(tenDigitJid, eightDigitJid, appConfig);
 		be.batch(customers);
-		
+	
 		LOGGER.trace("Creating UkMail Resources..."); 
-		CreateUkMailResources ukm = new CreateUkMailResources(customers, postageConfig, runNo, "MM"); 
+		CreateUkMailResources ukm = new CreateUkMailResources(customers, runNo, customers.get(0).getProduct().name()); 
 		ukm.method(); 
 		
 		// Return to original order to map records row by row
@@ -98,7 +86,7 @@ public class Main {
 		sortCustomers(customers, new CustomerComparatorOriginalOrder());
 		// Dpf saves the changed details to the output file
 		LOGGER.trace("Saving DPF file...");
-		dpf.Save(customers, insertLookup);
+		dpf.Save(customers);
 		LOGGER.trace("Data saved to: {}", outputFile);
 	}
 
@@ -134,21 +122,22 @@ public class Main {
 	}*/
 
 	private static void loadLookupFiles(AppConfig appConfig, ArrayList<Customer> customers) throws Exception {
-		String selectorRef = getSelectorRef(customers);
-		SelectorLookup lookup = new SelectorLookup(appConfig.getLookupFile());
-		ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-		mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
+		SelectorLookup.init(appConfig.getLookupFile());
+		Selector selector = SelectorLookup.getInstance().getLookup().get(customers.get(0).getSelectorRef());
 		
-		ProductionConfiguration.init(appConfig.getProductionConfigPath() + lookup.get(selectorRef).getProductionConfig()
+		ProductionConfiguration.init(appConfig.getProductionConfigPath() + selector.getProductionConfig()
 				+ appConfig.getProductionFileSuffix());
 		
-		postageConfig = new PostageConfiguration(appConfig.getPostageConfigPath()
-				+ lookup.get(selectorRef).getPostageConfig() + appConfig.getPostageFileSuffix());
+		PostageConfiguration.init(appConfig.getPostageConfigPath()
+				+ selector.getPostageConfig() + appConfig.getPostageFileSuffix());
 
-		PresentationConfiguration.init(appConfig.getPresentationPriorityConfigPath() + lookup.get(selectorRef).getPresentationConfig()
+		PresentationConfiguration.init(appConfig.getPresentationPriorityConfigPath() 
+						+ selector.getPresentationConfig()
 						+ appConfig.getPresentationPriorityFileSuffix());
-		insertLookup = new InsertLookup(appConfig.getInsertLookup());
-		envelopeLookup = new EnvelopeLookup(appConfig.getEnvelopeLookup());
+		
+		InsertLookup.init(appConfig.getInsertLookup());
+		EnvelopeLookup.init(appConfig.getEnvelopeLookup());
+		PapersizeLookup.init(appConfig.getPapersizeLookup());
 	}
 
 	private static void sortCustomers(ArrayList<Customer> list, Comparator comparator) {
@@ -158,9 +147,5 @@ public class Main {
 			LOGGER.fatal("Error when sorting: '{}'", e);
 			System.exit(1);
 		}
-	}
-
-	private static String getSelectorRef(ArrayList<Customer> customers) {
-		return customers.get(0).getSelectorRef();
 	}
 }

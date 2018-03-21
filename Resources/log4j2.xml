@@ -8,7 +8,7 @@
 		</Console>
        <File name="file">
          <Append>false</Append>
-         <FileName>c:/logs/location.log</FileName>
+         <FileName>logs/location.log</FileName>
          <PatternLayout pattern="%d{dd-MM-yyyy HH:mm:ss} [%-5level] %c{3} - %msg%ex{short}%n" />
        </File>
 	</Appenders>

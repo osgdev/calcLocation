@@ -18,7 +18,6 @@ import com.univocity.parsers.tsv.TsvWriter;
 import com.univocity.parsers.tsv.TsvWriterSettings;
 
 import uk.gov.dvla.osg.common.classes.Customer;
-import uk.gov.dvla.osg.common.config.InsertLookup;
 
 class DpfParser {
 	private static final Logger LOGGER = LogManager.getLogger();
@@ -102,7 +101,7 @@ class DpfParser {
 	 * @param customers the amended customer data
 	 * @throws IOException unable to write output file to the supplied path
 	 */
-	void Save(ArrayList<Customer> customers, InsertLookup il) throws IOException {
+	void Save(ArrayList<Customer> customers) throws IOException {
 		try (FileWriter fw = new FileWriter(new File(outputFile))) {
 			// Create an instance of TsvWriter with the default settings
 			TsvWriterSettings tsvwSettings = new TsvWriterSettings();
