@@ -10,7 +10,7 @@ class AppConfig {
 			batchTypeFieldName, subBatchTypeFieldName, fleetNoFieldName, groupIdFieldName, paperSizeFieldName,
 			mscFieldName, sortField, noOfPagesField, name1Field, name2Field, address1Field, address2Field,
 			address3Field, address4Field, address5Field, postCodeField, dpsField, insertField, appNameField,
-			weightAndSizeField;
+			weightAndSizeField, runDate;
 
 	private String siteFieldName, eightDigitJobIdFieldName, tenDigitJobIdFieldName, mailMarkBarcodeContent, eogField,
 			eotField, childSequence, outerEnvelope, mailingProduct, insertHopperCodeField,
@@ -78,7 +78,7 @@ class AppConfig {
 		mailmarkCompliancePath = prop.getProperty("mailmarkCompliancePath");
 		tenDigitJobIdIncrementValue = Integer.valueOf(prop.getProperty("tenDigitJobIdIncrementValue"));
 		presentationPriorityField = prop.getProperty("presentationPriorityField");
-
+		runDate = prop.getProperty("runDate");
 	}
 	
 	public String getWeightAndSizeField() {
@@ -283,6 +283,14 @@ class AppConfig {
 
 	public void setPresentationPriorityField(String presentationPriorityField) {
 		this.presentationPriorityField = presentationPriorityField;
+	}
+
+	public String getRunDate() {
+		return runDate;
+	}
+
+	public void setRunDate(String runDate) {
+		this.runDate = runDate;
 	}
 
 }

@@ -13,6 +13,8 @@ public class Tray {
 	
 	public Tray(Customer customer) {
 		customer.setSot();
+		this.size += customer.getThickness();
+		this.weight += customer.getWeight();
 		list.add(customer);
 		setSot = false;
 	}

@@ -80,7 +80,6 @@ class BatchEngine {
 		boolean firstCustomer = true;
 		Customer prev = ukMailCustomers.isEmpty() ? null : ukMailCustomers.get(0);
 
-
 		for (Customer customer : ukMailCustomers) {
 			batchMax = getBatchMax(customer.getFullBatchType(), customer.getPaperSize());
 			boolean changeOfMsc = !customer.getMsc().equals(prev.getMsc());
@@ -113,7 +112,7 @@ class BatchEngine {
 			prev = customer;
 			customerIndex++;
 		}
-		
+
 		// Loop through nonUkMailCustomers
 		firstCustomer = true;
 		prev = nonUkMailCustomers.get(0);
@@ -153,7 +152,7 @@ class BatchEngine {
 
 			pid++;
 		}
-		
+
 	}
 
 	private ArrayList<Tray> setTraysForMsc(int startIndex, int endIndex) {
@@ -196,17 +195,15 @@ class BatchEngine {
 	}
 
 	private void adjustTrays(ArrayList<Tray> trays) {
-		
+
 		int numberOfTrays = trays.size();
 		boolean adjust = false;
 
 		// check if any Tray is below minimum size
-		//int i = 1;
 		for (Tray tray : trays) {
-			//LOGGER.debug("{} : {} {}",i, tray.getList().get(0).getMsc(), tray.getNoItems());
-			//i++;
+			//LOGGER.debug("{}", tray.toString());
 			if (tray.getNoItems() < minimumTrayVolume) {
-				adjust =true;
+				adjust = true;
 			}
 		}
 

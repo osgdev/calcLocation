@@ -77,7 +77,7 @@ class DpfParser {
 			customer.setPostcode(record.getString(appConfig.getPostCodeField()));
 			
 			customer.setDps(record.getString(appConfig.getDpsField()));
-			customer.setMmCustomerContent(record.getString(appConfig.getMailMarkBarcodeContent()));
+			customer.setMmCustomerContent(record.getString(appConfig.getMailMarkBarcodeCustomerContent()));
 			customer.setNoOfPages(record.getInt(appConfig.getNoOfPagesField()));
 			//customer.setSot(record.getString(appConfig.getEotField()));
 			customer.setEog(record.getString(appConfig.getEogField()));
@@ -88,6 +88,9 @@ class DpfParser {
 			customer.setProduct(record.getString(appConfig.getMailingProduct()));
 			customer.setAppName(record.getString(appConfig.getAppNameField()));
 			customer.setPresentationPriority(record.getInt(appConfig.getPresentationPriorityField()));
+			Integer tpig = record.getString(appConfig.getTotalNumberOfPagesInGroupField()).equals("") ? null: record.getInt(appConfig.getTotalNumberOfPagesInGroupField());
+			if (tpig != null) customer.setTotalPagesInGroup(tpig);
+			customer.setRunDate(record.getString(appConfig.getRunDate()));
 			customers.add(customer);
 		});
 		headers = parser.getRecordMetadata().headers();
@@ -146,6 +149,11 @@ class DpfParser {
 					writer.addValue(appConfig.getMailMarkBarcodeContent(), customer.getMmBarcodeContent());
 				} catch (Exception ex) {
 					LOGGER.fatal("MailMarkBarcodeContent {}", appConfig.getMailMarkBarcodeContent());
+				}
+				try {
+					writer.addValue(appConfig.getMailMarkBarcodeCustomerContent(), customer.getMmCustomerContent());
+				} catch (Exception ex) {
+					LOGGER.fatal("MailMark Customer Content {}", appConfig.getMailMarkBarcodeCustomerContent());
 				}
 				try {
 					writer.addValue(appConfig.getChildSequence(), customer.getSequenceInChild());
