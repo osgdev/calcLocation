@@ -45,7 +45,7 @@ class BatchEngine {
 	private HashMap<String, Envelope> envelopeLookup;
 	private ProductionConfiguration prodConfig;
 
-	BatchEngine(int tenDigitJid, int eightDigitJid, AppConfig appConfig) {
+	BatchEngine(int tenDigitJid, int eightDigitJid) {
 
 		LOGGER.trace("Starting Batch Engine");
 		prodConfig = ProductionConfiguration.getInstance();
@@ -57,7 +57,7 @@ class BatchEngine {
 		maxTraySize = ProductionConfiguration.getInstance().getTraySize();
 		maxTrayWeight = PostageConfiguration.getInstance().getMaxTrayWeight();
 		ukmBatchTypes = PostageConfiguration.getInstance().getUkmBatchTypes();
-		jidInc = appConfig.getTenDigitJobIdIncrementValue();
+		jidInc = AppConfig.getInstance().getTenDigitJobIdIncrementValue();
 		this.eightDigitJid = eightDigitJid;
 		this.tenDigitJid = tenDigitJid;
 	}

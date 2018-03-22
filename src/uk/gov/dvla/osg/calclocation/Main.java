@@ -37,15 +37,15 @@ public class Main {
 		assignArgs(args);
 		// load the Application Configuration file
 		LOGGER.trace("Loading AppConfig...");
-		AppConfig appConfig = new AppConfig(propsFile);
+		AppConfig.init(propsFile);
 		// load customers from dpf file
 		LOGGER.trace("Initialising DPF Parser...");
-		DpfParser dpf = new DpfParser(inputFile, outputFile, appConfig);
+		DpfParser dpf = new DpfParser(inputFile, outputFile);
 		LOGGER.trace("Loading customers...");
 		ArrayList<Customer> customers = dpf.Load();
 		// Load Selector Lookup & Production Config files
 		LOGGER.trace("Loading Lookup Files...");
-		loadLookupFiles(appConfig, customers);
+		loadLookupFiles(customers);
 		// Sort Order: Language -> Presentation Priority
 		LOGGER.trace("Sorting input...");
 		sortCustomers(customers, new CustomerComparator());
@@ -74,7 +74,7 @@ public class Main {
 		sortCustomers(customers, new CustomerComparatorWithLocation());
 		// Putting into batches that are above the 25 tray minimum
 		LOGGER.trace("Running Batch Engine...");
-		BatchEngine be = new BatchEngine(tenDigitJid, eightDigitJid, appConfig);
+		BatchEngine be = new BatchEngine(tenDigitJid, eightDigitJid);
 		be.batch(customers);
 	
 		LOGGER.trace("Creating UkMail Resources..."); 
@@ -121,7 +121,10 @@ public class Main {
 		return mapper.readValue(new File(propsFile), AppConfig.class);
 	}*/
 
-	private static void loadLookupFiles(AppConfig appConfig, ArrayList<Customer> customers) throws Exception {
+	private static void loadLookupFiles(ArrayList<Customer> customers) throws Exception {
+		
+		AppConfig appConfig = AppConfig.getInstance();
+		
 		SelectorLookup.init(appConfig.getLookupFile());
 		Selector selector = SelectorLookup.getInstance().getLookup().get(customers.get(0).getSelectorRef());
 		
