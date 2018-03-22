@@ -6,6 +6,7 @@ import static uk.gov.dvla.osg.common.classes.FullBatchType.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -31,7 +32,7 @@ class BatchEngine {
 
 	private int minimumTrayVolume;
 
-	private String ukmBatchTypes;
+	private List<BatchType> ukmBatchTypes;
 	private HashMap<String, PaperSize> papersizeLookup;
 	private double maxTraySize;
 	private double maxTrayWeight;
@@ -159,7 +160,7 @@ class BatchEngine {
 		for (Customer customer : ukMailCustomers.subList(startIndex, endIndex)) {
 			if (customer.getNoOfPages() + pageCount <= batchMax) {
 				// Same Batch - check if weight and size would put tray over limits
-				if (customer.getThickness() + tray.getSize() > maxTraySize
+				if (customer.getSize() + tray.getSize() > maxTraySize
 						|| customer.getWeight() + tray.getWeight() > maxTrayWeight) {
 					// Tray limits exceeded - start a new tray
 					trays.add(tray);
@@ -173,7 +174,7 @@ class BatchEngine {
 				// New Batch = set customer as SOB and start next tray
 				pageCount = customer.getNoOfPages();
 				customer.setSob();
-				if (customer.getThickness() + tray.getSize() > maxTraySize
+				if (customer.getSize() + tray.getSize() > maxTraySize
 						|| customer.getWeight() + tray.getWeight() > maxTrayWeight) {
 					// Tray limits exceeded - start a new tray
 					trays.add(tray);
@@ -196,7 +197,6 @@ class BatchEngine {
 
 		// check if any Tray is below minimum size
 		for (Tray tray : trays) {
-			//LOGGER.debug("{}", tray.toString());
 			if (tray.getNoItems() < minimumTrayVolume) {
 				adjust = true;
 			}
@@ -267,11 +267,11 @@ class BatchEngine {
 		for (Customer customer : allCustomers) {
 			double weight = 0;
 			double size = 0;
-			if (BatchType.MULTI.equals(customer.getBatchType())
+			if (MULTI.equals(customer.getBatchType())
 					&& mscLookup.get(customer.getTransactionID()) >= minimumTrayVolume) {
 				if (!customer.isEog()) {
 					weight += customer.getWeight();
-					size += customer.getThickness();
+					size += customer.getSize();
 				} else {
 					// change envelope
 					if (customer.getLang().equals(Language.E)) {
@@ -288,10 +288,10 @@ class BatchEngine {
 						insertWeight = insertLookup.get(customer.getInsertRef()).getWeight();
 					}
 					customer.setWeight(customer.getWeight() + weight + envelopeWeight + insertWeight);
-					customer.setThickness(customer.getThickness() + size + envelopeSize + insertSize);
+					customer.setSize(customer.getSize() + size + envelopeSize + insertSize);
 
 				}
-			} else if (customer.getBatchType().equals(BatchType.MULTI)) {
+			} else if (customer.getBatchType().equals(MULTI)) {
 				if (customer.getLang().equals(Language.E)) {
 					if (!prodConfig.getSite(SORTEDE).equals("X")) {
 						customer.setBatchType(SORTED);
@@ -318,12 +318,12 @@ class BatchEngine {
 				double envelopeWeight = envelopeLookup.get(customer.getEnvelope()).getWeight();
 				double insertSize = 0;
 				double insertWeight = 0;
-				if (!customer.getInsertRef().isEmpty()) {
+				if (StringUtils.isNotBlank(customer.getInsertRef())) {
 					insertSize = insertLookup.get(customer.getInsertRef()).getThickness();
 					insertWeight = insertLookup.get(customer.getInsertRef()).getWeight();
 				}
 				customer.setWeight(customer.getWeight() + weight + envelopeWeight + insertWeight);
-				customer.setThickness(customer.getThickness() + size + envelopeSize + insertSize);
+				customer.setSize(customer.getSize() + size + envelopeSize + insertSize);
 				customer.setSite(ProductionConfiguration.getInstance().getSite(customer.getFullBatchType()));
 			}
 		}
@@ -331,8 +331,7 @@ class BatchEngine {
 
 	private void filterCustomers(ArrayList<Customer> allCustomers) {
 		for (Customer customer : allCustomers) {
-			if (!customer.getBatchType().equals(BatchType.UNSORTED)
-					&& ukmBatchTypes.contains(customer.getBatchName())) {
+			if (ukmBatchTypes.contains(customer.getBatchType())) {
 				if (mscLookup.get(customer.getTransactionID()) < minimumTrayVolume) {
 					// MSCS are under minimum tray volume so move to unsorted list
 					customer.setBatchType(BatchType.UNSORTED);
@@ -365,18 +364,18 @@ class BatchEngine {
 		Customer prev = input.get(0);
 		for (Customer customer : input) {
 			// Check if customer has an MSC
-			if (StringUtils.isNotBlank(customer.getMsc()) && !customer.getBatchType().equals(BatchType.UNSORTED)
-					&& ukmBatchTypes.contains(customer.getBatchName())) {
+			if (StringUtils.isNotBlank(customer.getMsc()) && ukmBatchTypes.contains(customer.getBatchType())) {
 
 				if (!customer.equals(prev) || !customer.getMsc().equals(prev.getMsc())) {
 					transactionID++;
 					groupCount = 0;
 				}
 
-				// Add result to lookup map
 				if (customer.isEog()) {
 					groupCount++;
 				}
+				
+				// Add result to lookup map
 				customer.setTransactionID(transactionID);
 				mscLookup.put(transactionID, groupCount);
 				prev = customer;

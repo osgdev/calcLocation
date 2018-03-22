@@ -82,7 +82,7 @@ class DpfParser {
 			customer.setEog(record.getString(appConfig.getEogField()));
 			String[] str = StringUtils.split(record.getString(appConfig.getWeightAndSizeField()), "|");
 			customer.setWeight(Double.parseDouble(str[0]));
-			customer.setThickness(Double.parseDouble(str[1]));
+			customer.setSize(Double.parseDouble(str[1]));
 			customer.setEnvelope(record.getString(appConfig.getOuterEnvelope()));
 			customer.setProduct(record.getString(appConfig.getMailingProduct()));
 			customer.setAppName(record.getString(appConfig.getAppNameField()));
