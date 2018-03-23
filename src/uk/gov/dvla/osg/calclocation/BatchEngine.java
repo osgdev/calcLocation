@@ -283,7 +283,7 @@ class BatchEngine {
 					double envelopeWeight = envelopeLookup.get(customer.getEnvelope()).getWeight();
 					double insertSize = 0;
 					double insertWeight = 0;
-					if (!customer.getInsertRef().isEmpty()) {
+					if (StringUtils.isNotBlank(customer.getInsertRef())) {
 						insertSize = insertLookup.get(customer.getInsertRef()).getThickness();
 						insertWeight = insertLookup.get(customer.getInsertRef()).getWeight();
 					}
