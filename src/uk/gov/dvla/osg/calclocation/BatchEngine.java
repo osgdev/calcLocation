@@ -1,7 +1,6 @@
 package uk.gov.dvla.osg.calclocation;
 
 import static uk.gov.dvla.osg.common.classes.BatchType.*;
-import static uk.gov.dvla.osg.common.classes.FullBatchType.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,6 +21,13 @@ import uk.gov.dvla.osg.common.config.PostageConfiguration;
 import uk.gov.dvla.osg.common.config.PresentationConfiguration;
 import uk.gov.dvla.osg.common.config.ProductionConfiguration;
 
+/**
+ * Sets and adjusts trays to ensure they are within UK Mail limits. Also partitions off batches according to batchMax levels and sets the JobId and PieceId values for docs within each batch.
+ */
+/**
+ * @author OSG
+ *
+ */
 class BatchEngine {
 
 	private static final Logger LOGGER = LogManager.getLogger();
@@ -31,36 +37,40 @@ class BatchEngine {
 	private int jidInc;
 
 	private int minimumTrayVolume;
-
 	private List<BatchType> ukmBatchTypes;
 	private HashMap<String, PaperSize> papersizeLookup;
 	private double maxTraySize;
 	private double maxTrayWeight;
 	private int batchMax;
 	private int pageCount;
+
 	private ArrayList<Customer> ukMailCustomers = new ArrayList<>();
 	private ArrayList<Customer> nonUkMailCustomers = new ArrayList<>();
-	private PresentationConfiguration presentationConfig;
 	private Map<Integer, Integer> mscLookup = new HashMap<>();
 	private HashMap<String, Insert> insertLookup;
 	private HashMap<String, Envelope> envelopeLookup;
+	private PresentationConfiguration presConfig;
 	private ProductionConfiguration prodConfig;
 
 	BatchEngine(int tenDigitJid, int eightDigitJid) {
 
 		LOGGER.trace("Starting Batch Engine");
+		this.eightDigitJid = eightDigitJid;
+		this.tenDigitJid = tenDigitJid;
+
 		prodConfig = ProductionConfiguration.getInstance();
-		presentationConfig = PresentationConfiguration.getInstance();
+		presConfig = PresentationConfiguration.getInstance();
+
 		papersizeLookup = PapersizeLookup.getInstance().getLookup();
 		envelopeLookup = EnvelopeLookup.getInstance().getLookup();
 		insertLookup = InsertLookup.getInstance().getLookup();
-		minimumTrayVolume = PostageConfiguration.getInstance().getUkmMinimumTrayVolume();
+
 		maxTraySize = ProductionConfiguration.getInstance().getTraySize();
+		minimumTrayVolume = PostageConfiguration.getInstance().getUkmMinimumTrayVolume();
 		maxTrayWeight = PostageConfiguration.getInstance().getMaxTrayWeight();
 		ukmBatchTypes = PostageConfiguration.getInstance().getUkmBatchTypes();
 		jidInc = AppConfig.getInstance().getTenDigitJobIdIncrementValue();
-		this.eightDigitJid = eightDigitJid;
-		this.tenDigitJid = tenDigitJid;
+
 	}
 
 	public void batch(ArrayList<Customer> customers) {
@@ -71,6 +81,7 @@ class BatchEngine {
 		countMscs(customers);
 		filterCustomers(customers);
 
+		// Process ukMailCustomers
 		int customerIndex = 0;
 		pageCount = 0;
 		boolean firstCustomer = true;
@@ -101,7 +112,7 @@ class BatchEngine {
 				// Same MSC, Different Batch Type
 				LOGGER.fatal("NOT YET IMPLEMENTED METHOD! MSC {}", customer.getMsc());
 			} else {
-				// Same MSC, Same Batch Type
+				// Same MSC, Same Batch Type -> do nothing
 			}
 
 			// End of Loop - next customer
@@ -132,6 +143,7 @@ class BatchEngine {
 		}
 		Collections.sort(customers, new CustomerComparatorWithLocation());
 
+		// Loop through all customers and set JID's, PID & batch sequence
 		int pid = 1;
 		int batchSequence = 0;
 		for (Customer customer : customers) {
@@ -151,6 +163,12 @@ class BatchEngine {
 
 	}
 
+	/**
+	 * Loop throuh all customers in the given range, ensuring that they are within the limits of trayWeight and traySize. When limits are reached a new tray is started. When the batchMax is reached a new batch and new tray is started. Note - changing trays when a limit is reached could lead to a tray being under the minimum volume required by UK Mail. This scenario is handled in the adjustTrays method.
+	 * @param startIndex - first customer with MSC
+	 * @param endIndex - final customer with MSC
+	 * @return - all customers for the range divided into trays
+	 */
 	private ArrayList<Tray> setTraysForMsc(int startIndex, int endIndex) {
 
 		ArrayList<Tray> trays = new ArrayList<>();
@@ -190,6 +208,10 @@ class BatchEngine {
 		return trays;
 	}
 
+	/**
+	 * If any trays are below the minimum volume accepted by UK Mail, then all envelopes are put into a temporary list which is divided up according to the number of trays that were passed into the method. The result is that all items are evenly spread across all trays without going over the tray limits. A side-effect of this way of splitting documents is that SOT and SOB markers may move out of position, so extra checks are utilised that move markers to the start of the relevant tray and page-counts are re-started to keep batches synchronised.
+	 * @param trays Trays for same mailsort code.
+	 */
 	private void adjustTrays(ArrayList<Tray> trays) {
 
 		int numberOfTrays = trays.size();
@@ -263,12 +285,19 @@ class BatchEngine {
 		}
 	}
 
+	/**
+	 * Set weight and size for multi customer when above tray minimum.
+	 * Set multis to Sorted (unsorted if sorted is ignored for Selector), when there are not 
+	 * enough envelopes (EOG's) to meet the minimumTrayVolume for Uk Mail.
+	 * @param allCustomers
+	 */
 	private void adjustMultis(ArrayList<Customer> allCustomers) {
 		for (Customer customer : allCustomers) {
 			double weight = 0;
 			double size = 0;
 			if (MULTI.equals(customer.getBatchType())
 					&& mscLookup.get(customer.getTransactionID()) >= minimumTrayVolume) {
+				// Multi Customer - over volume
 				if (!customer.isEog()) {
 					weight += customer.getWeight();
 					size += customer.getSize();
@@ -292,22 +321,14 @@ class BatchEngine {
 
 				}
 			} else if (customer.getBatchType().equals(MULTI)) {
-				if (customer.getLang().equals(Language.E)) {
-					if (!prodConfig.getSite(SORTEDE).equals("X")) {
-						customer.setBatchType(SORTED);
-					} else {
-						customer.setBatchType(UNSORTED);
-					}
+				if (!prodConfig.getSite(FullBatchType.valueOf(SORTED.name() + customer.getLang().name())).equals("X")) {
+					customer.setBatchType(SORTED);
 				} else {
-					if (!prodConfig.getSite(SORTEDW).equals("X")) {
-						customer.setBatchType(SORTED);
-					} else {
-						customer.setBatchType(UNSORTED);
-					}
+					customer.setBatchType(UNSORTED);
 				}
 				customer.setEog();
 				customer.setGroupId(null);
-				customer.setPresentationPriority(presentationConfig.lookupRunOrder(customer.getBatchName()));
+				customer.setPresentationPriority(presConfig.lookupRunOrder(customer.getBatchName()));
 				// change envelope
 				if (customer.getLang().equals(Language.E)) {
 					customer.setEnvelope(ProductionConfiguration.getInstance().getEnvelopeEnglishMm());
@@ -329,6 +350,11 @@ class BatchEngine {
 		}
 	}
 
+	/**
+	 * Divides the original input into lists of Uk Mail customers and Non UK Mail customers.
+	 * If number for the MSC is below the minimum volume, the batch type is changed to UnSorted.
+	 * @param allCustomers
+	 */
 	private void filterCustomers(ArrayList<Customer> allCustomers) {
 		for (Customer customer : allCustomers) {
 			if (ukmBatchTypes.contains(customer.getBatchType())) {
@@ -336,7 +362,7 @@ class BatchEngine {
 					// MSCS are under minimum tray volume so move to unsorted list
 					customer.setBatchType(BatchType.UNSORTED);
 					customer.setEog();
-					customer.setPresentationPriority(presentationConfig.lookupRunOrder(customer.getBatchName()));
+					customer.setPresentationPriority(presConfig.lookupRunOrder(customer.getBatchName()));
 					// Change location
 					customer.setSite(prodConfig.getSite(customer.getFullBatchType()));
 					// change product
@@ -357,6 +383,12 @@ class BatchEngine {
 		}
 	}
 
+	/**
+	 * Count number of records with same transaciton type & same MSC. Customers of same type
+	 * are assigned a transaction ID and this is stored in their properties. This allows for the
+	 * group count to be looked up for each individual customer.
+	 * @param input
+	 */
 	private void countMscs(ArrayList<Customer> input) {
 		// Calculate the start time
 		int transactionID = 1;
@@ -374,7 +406,7 @@ class BatchEngine {
 				if (customer.isEog()) {
 					groupCount++;
 				}
-				
+
 				// Add result to lookup map
 				customer.setTransactionID(transactionID);
 				mscLookup.put(transactionID, groupCount);
@@ -383,6 +415,12 @@ class BatchEngine {
 		}
 	}
 
+	/**
+	 * Batch max is increased by the value of the multiplier when docs are folded.
+	 * @param fullBatchType
+	 * @param paperSize
+	 * @return
+	 */
 	private int getBatchMax(FullBatchType fullBatchType, String paperSize) {
 		int batchmax = ProductionConfiguration.getInstance().getBatchMax(fullBatchType);
 		return papersizeLookup.containsKey(paperSize)
