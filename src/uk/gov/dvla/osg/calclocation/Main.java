@@ -1,8 +1,6 @@
 package uk.gov.dvla.osg.calclocation;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -100,23 +98,19 @@ public class Main {
 			System.exit(1);
 		}
 		
-		inputFile = args[0];
+		propsFile = args[0];
+		if (!(new File(propsFile).exists())) {
+			LOGGER.fatal("File '{}' doesn't exist", propsFile);
+			System.exit(1);
+		}
+		
+		inputFile = args[1];
 		if (!(new File(inputFile).exists())) {
 			LOGGER.fatal("File '{}' doesn't exist", inputFile);
 			System.exit(1);
 		}
 
-		outputFile = args[1];
-		if (!Files.isWritable(Paths.get(outputFile))) {
-			LOGGER.fatal("Unable to create output file in filepath {}", outputFile);
-			System.exit(1);
-		}
-		
-		propsFile = args[2];
-		if (!(new File(propsFile).exists())) {
-			LOGGER.fatal("File '{}' doesn't exist", propsFile);
-			System.exit(1);
-		}
+		outputFile = args[2];
 		runNo = args[3];
 		eightDigitJid = Integer.parseInt(args[4]);
 		tenDigitJid = Integer.parseInt(args[5]);

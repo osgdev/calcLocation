@@ -53,7 +53,6 @@ class BatchEngine {
 	private ProductionConfiguration prodConfig;
 
 	BatchEngine(int tenDigitJid, int eightDigitJid) {
-
 		LOGGER.trace("Starting Batch Engine");
 		this.eightDigitJid = eightDigitJid;
 		this.tenDigitJid = tenDigitJid;
@@ -70,7 +69,6 @@ class BatchEngine {
 		maxTrayWeight = PostageConfiguration.getInstance().getMaxTrayWeight();
 		ukmBatchTypes = PostageConfiguration.getInstance().getUkmBatchTypes();
 		jidInc = AppConfig.getInstance().getTenDigitJobIdIncrementValue();
-
 	}
 
 	public void batch(ArrayList<Customer> customers) {

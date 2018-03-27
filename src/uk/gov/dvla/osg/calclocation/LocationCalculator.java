@@ -48,6 +48,13 @@ public class LocationCalculator {
 		if (isNotIgnore(REJECTW)) {
 			batchMap.put(REJECTW, new BatchTypeSingle(prodConfig.getSite(REJECTW)));
 		}
+		if (isNotIgnore(UNCODEDE)) {
+			batchMap.put(UNCODEDE, new BatchTypeSingle(prodConfig.getSite(UNCODEDE)));
+		}
+		if (isNotIgnore(UNCODEDW)) {
+			batchMap.put(UNCODEDW, new BatchTypeSingle(prodConfig.getSite(UNCODEDW)));
+		}
+		
 		// Groups
 		if (isNotIgnore(FLEETE)) {
 			batchMap.put(FLEETE, new BatchTypeGroup(prodConfig.getSite(FLEETE)));
