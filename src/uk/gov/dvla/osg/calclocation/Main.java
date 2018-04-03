@@ -78,7 +78,7 @@ public class Main {
 		be.batch(customers);
 	
 		LOGGER.trace("Creating UkMail Resources..."); 
-		CreateUkMailResources ukm = new CreateUkMailResources(customers, runNo, customers.get(0).getProduct()); 
+		CreateUkMailResources ukm = new CreateUkMailResources(customers, runNo); 
 		ukm.method(); 
 		
 		// Return to original order to map records row by row
