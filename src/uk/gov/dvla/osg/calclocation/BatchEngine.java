@@ -13,7 +13,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import uk.gov.dvla.osg.calclocation.models.Tray;
-import uk.gov.dvla.osg.common.classes.*;
+import uk.gov.dvla.osg.common.classes.BatchType;
+import uk.gov.dvla.osg.common.classes.Customer;
+import uk.gov.dvla.osg.common.classes.FullBatchType;
+import uk.gov.dvla.osg.common.classes.Language;
+import uk.gov.dvla.osg.common.classes.Product;
 import uk.gov.dvla.osg.common.config.EnvelopeLookup;
 import uk.gov.dvla.osg.common.config.InsertLookup;
 import uk.gov.dvla.osg.common.config.PapersizeLookup;
@@ -38,7 +42,7 @@ class BatchEngine {
 
 	private int minimumTrayVolume;
 	private List<BatchType> ukmBatchTypes;
-	private HashMap<String, PaperSize> papersizeLookup;
+	private PapersizeLookup papersizeLookup;
 	private double maxTraySize;
 	private double maxTrayWeight;
 	private int batchMax;
@@ -47,8 +51,8 @@ class BatchEngine {
 	private ArrayList<Customer> ukMailCustomers = new ArrayList<>();
 	private ArrayList<Customer> nonUkMailCustomers = new ArrayList<>();
 	private Map<Integer, Integer> mscLookup = new HashMap<>();
-	private HashMap<String, Insert> insertLookup;
-	private HashMap<String, Envelope> envelopeLookup;
+	private InsertLookup insertLookup;
+	private EnvelopeLookup envelopeLookup;
 	private PresentationConfiguration presConfig;
 	private ProductionConfiguration prodConfig;
 
@@ -60,9 +64,9 @@ class BatchEngine {
 		prodConfig = ProductionConfiguration.getInstance();
 		presConfig = PresentationConfiguration.getInstance();
 
-		papersizeLookup = PapersizeLookup.getInstance().getLookup();
-		envelopeLookup = EnvelopeLookup.getInstance().getLookup();
-		insertLookup = InsertLookup.getInstance().getLookup();
+		papersizeLookup = PapersizeLookup.getInstance();
+		envelopeLookup = EnvelopeLookup.getInstance();
+		insertLookup = InsertLookup.getInstance();
 
 		maxTraySize = ProductionConfiguration.getInstance().getTraySize();
 		minimumTrayVolume = PostageConfiguration.getInstance().getUkmMinimumTrayVolume();
