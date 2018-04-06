@@ -122,26 +122,29 @@ class BatchEngine {
 			customerIndex++;
 		}
 
-		// Loop through nonUkMailCustomers
-		firstCustomer = true;
-		prev = nonUkMailCustomers.get(0);
-		pageCount = 0;
+		// Added if block, PB - 06/04
+		// Loop through nonUkMailCustomers if not empty
+		if (!nonUkMailCustomers.isEmpty()) {
+			firstCustomer = true;
+			prev = nonUkMailCustomers.get(0);
+			pageCount = 0;
 
-		for (Customer customer : nonUkMailCustomers) {
-			batchMax = getBatchMax(customer.getFullBatchType(), customer.getPaperSize());
-			customer.setMsc("");
-			if (firstCustomer) {
-				customer.setSob();
-				firstCustomer = false;
-				pageCount = customer.getNoOfPages();
-			} else if (!prev.equals(customer) || customer.getNoOfPages() + pageCount > batchMax) {
-				customer.setSob();
-				pageCount = customer.getNoOfPages();
-				prev.setEog();
-			} else {
-				pageCount += customer.getNoOfPages();
+			for (Customer customer : nonUkMailCustomers) {
+				batchMax = getBatchMax(customer.getFullBatchType(), customer.getPaperSize());
+				customer.setMsc("");
+				if (firstCustomer) {
+					customer.setSob();
+					firstCustomer = false;
+					pageCount = customer.getNoOfPages();
+				} else if (!prev.equals(customer) || customer.getNoOfPages() + pageCount > batchMax) {
+					customer.setSob();
+					pageCount = customer.getNoOfPages();
+					prev.setEog();
+				} else {
+					pageCount += customer.getNoOfPages();
+				}
+				prev = customer;
 			}
-			prev = customer;
 		}
 		Collections.sort(customers, new CustomerComparatorWithLocation());
 
@@ -288,9 +291,7 @@ class BatchEngine {
 	}
 
 	/**
-	 * Set weight and size for multi customer when above tray minimum.
-	 * Set multis to Sorted (unsorted if sorted is ignored for Selector), when there are not 
-	 * enough envelopes (EOG's) to meet the minimumTrayVolume for Uk Mail.
+	 * Set weight and size for multi customer when above tray minimum. Set multis to Sorted (unsorted if sorted is ignored for Selector), when there are not enough envelopes (EOG's) to meet the minimumTrayVolume for Uk Mail.
 	 * @param allCustomers
 	 */
 	private void adjustMultis(ArrayList<Customer> allCustomers) {
@@ -353,8 +354,7 @@ class BatchEngine {
 	}
 
 	/**
-	 * Divides the original input into lists of Uk Mail customers and Non UK Mail customers.
-	 * If number for the MSC is below the minimum volume, the batch type is changed to UnSorted.
+	 * Divides the original input into lists of Uk Mail customers and Non UK Mail customers. If number for the MSC is below the minimum volume, the batch type is changed to UnSorted.
 	 * @param allCustomers
 	 */
 	private void filterCustomers(ArrayList<Customer> allCustomers) {
@@ -386,9 +386,7 @@ class BatchEngine {
 	}
 
 	/**
-	 * Count number of records with same transaciton type & same MSC. Customers of same type
-	 * are assigned a transaction ID and this is stored in their properties. This allows for the
-	 * group count to be looked up for each individual customer.
+	 * Count number of records with same transaciton type & same MSC. Customers of same type are assigned a transaction ID and this is stored in their properties. This allows for the group count to be looked up for each individual customer.
 	 * @param input
 	 */
 	private void countMscs(ArrayList<Customer> input) {
