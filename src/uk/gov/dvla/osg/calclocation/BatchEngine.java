@@ -26,9 +26,9 @@ import uk.gov.dvla.osg.common.config.PresentationConfiguration;
 import uk.gov.dvla.osg.common.config.ProductionConfiguration;
 
 /**
- * Sets and adjusts trays to ensure they are within UK Mail limits. Also partitions off batches according to batchMax levels and sets the JobId and PieceId values for docs within each batch.
- */
-/**
+ * Sets and adjusts trays to ensure they are within UK Mail limits. 
+ * Also partitions off batches according to batchMax levels and sets the JobId and PieceId values 
+ * for docs within each batch.
  * @author OSG
  *
  */
