@@ -124,6 +124,7 @@ class BatchEngine {
 
 		// Added if block, PB - 06/04
 		// Loop through nonUkMailCustomers if not empty
+		
 		if (!nonUkMailCustomers.isEmpty()) {
 			firstCustomer = true;
 			prev = nonUkMailCustomers.get(0);
@@ -135,7 +136,7 @@ class BatchEngine {
 				if (firstCustomer) {
 					customer.setSob();
 					firstCustomer = false;
-					pageCount = customer.getNoOfPages();
+					pageCount = customer.getNoOfPages();					
 				} else if (!prev.equals(customer) || customer.getNoOfPages() + pageCount > batchMax) {
 					customer.setSob();
 					pageCount = customer.getNoOfPages();
@@ -146,14 +147,15 @@ class BatchEngine {
 				prev = customer;
 			}
 		}
-		Collections.sort(customers, new CustomerComparatorWithLocation());
+		
+		//Collections.sort(customers, new CustomerComparatorWithLocation());
 
 		// Loop through all customers and set JID's, PID & batch sequence
 		int pid = 1;
 		int batchSequence = 0;
+
 		for (Customer customer : customers) {
 			if (customer.isSob()) {
-
 				pid = 1;
 				batchSequence++;
 				tenDigitJid += jidInc;
@@ -162,7 +164,6 @@ class BatchEngine {
 			customer.setTenDigitJid(tenDigitJid);
 			customer.setEightDigitJid(eightDigitJid);
 			customer.setBatchSequence(batchSequence);
-
 			pid++;
 		}
 

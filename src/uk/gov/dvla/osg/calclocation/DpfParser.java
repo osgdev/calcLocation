@@ -53,9 +53,11 @@ class DpfParser {
 		parser.parseAllRecords(new File(inputFile)).forEach(record -> {
 			
 			Customer customer = new Customer(counter.getAndIncrement());
+			customer.setAppName(record.getString(appConfig.getAppNameField()));
+			customer.setSelectorRef(record.getString(appConfig.getLookupReferenceFieldName()));
+			customer.setMailingId(record.getString(appConfig.getMailingIdField()));
 			customer.setDocRef(record.getString(appConfig.getDocumentReference()));
 			customer.setSortField(record.getString(appConfig.getSortField()));
-			customer.setSelectorRef(record.getString(appConfig.getLookupReferenceFieldName()));
 			customer.setLang(record.getString(appConfig.getLanguageFieldName()));
 			customer.setStationery(record.getString(appConfig.getStationeryFieldName()));
 			customer.setBatchType(record.getString(appConfig.getBatchTypeFieldName()));
@@ -85,7 +87,7 @@ class DpfParser {
 			customer.setSize(Double.parseDouble(str[1]));
 			customer.setEnvelope(record.getString(appConfig.getOuterEnvelope()));
 			customer.setProduct(record.getString(appConfig.getMailingProduct()));
-			customer.setAppName(record.getString(appConfig.getAppNameField()));
+			
 			customer.setPresentationPriority(record.getInt(appConfig.getPresentationPriorityField()));
 			Integer tpig = record.getString(appConfig.getTotalNumberOfPagesInGroupField()).equals("") ? null: record.getInt(appConfig.getTotalNumberOfPagesInGroupField());
 			if (tpig != null) customer.setTotalPagesInGroup(tpig);

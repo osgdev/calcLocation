@@ -23,7 +23,7 @@ class AppConfig {
 			batchTypeFieldName, subBatchTypeFieldName, fleetNoFieldName, groupIdFieldName, paperSizeFieldName,
 			mscFieldName, sortField, noOfPagesField, name1Field, name2Field, address1Field, address2Field,
 			address3Field, address4Field, address5Field, postCodeField, dpsField, insertField, appNameField,
-			weightAndSizeField, runDate;
+			mailingIdField, weightAndSizeField, runDate;
 
 	private String siteFieldName, eightDigitJobIdFieldName, tenDigitJobIdFieldName, mailMarkBarcodeContent, eogField,
 			eotField, childSequence, outerEnvelope, mailingProduct, insertHopperCodeField,
@@ -74,8 +74,10 @@ class AppConfig {
 			System.exit(1);
 		}
 		
-		documentReference = prop.getProperty("documentReference");
 		lookupReferenceFieldName = prop.getProperty("lookupReferenceFieldName");
+		appNameField = prop.getProperty("appNameField");
+		mailingIdField = prop.getProperty("mailingIdField");
+		documentReference = prop.getProperty("documentReference");
 		languageFieldName = prop.getProperty("languageFieldName");
 		stationeryFieldName = prop.getProperty("stationeryFieldName");
 		batchTypeFieldName = prop.getProperty("batchTypeFieldName");
@@ -96,7 +98,6 @@ class AppConfig {
 		postCodeField = prop.getProperty("postCodeField");
 		dpsField = prop.getProperty("dpsField");
 		insertField = prop.getProperty("insertField");
-		appNameField = prop.getProperty("appNameField");
 		weightAndSizeField = prop.getProperty("weightAndSizeField");
 		siteFieldName = prop.getProperty("siteFieldName");
 		eightDigitJobIdFieldName = prop.getProperty("jobIdFieldName");
@@ -125,6 +126,10 @@ class AppConfig {
 		tenDigitJobIdIncrementValue = Integer.valueOf(prop.getProperty("tenDigitJobIdIncrementValue"));
 		presentationPriorityField = prop.getProperty("presentationPriorityField");
 		runDate = prop.getProperty("runDate");
+	}
+	
+	public String getMailingIdField() {
+		return mailingIdField;
 	}
 	
 	public String getWeightAndSizeField() {

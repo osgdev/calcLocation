@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -31,63 +32,70 @@ public class Main {
 	
 	public static void main(String[] args) throws Exception {
 
-		LOGGER.info("Starting uk.gov.dvla.osg.batch.Main");
-		// assign & validate command line args
-		LOGGER.trace("Assigning Args...");
-		assignArgs(args);
-		// load the Application Configuration file
-		LOGGER.trace("Loading AppConfig...");
-		AppConfig.init(propsFile);
-		// load customers from dpf file
-		LOGGER.trace("Initialising DPF Parser...");
-		DpfParser dpf = new DpfParser(inputFile, outputFile);
-		LOGGER.trace("Loading customers...");
-		ArrayList<Customer> customers = dpf.Load();
-		// Load Selector Lookup & Production Config files
-		LOGGER.trace("Loading Lookup Files...");
-		loadLookupFiles(customers);
-		// Sort Order: Language -> Presentation Priority
-		LOGGER.trace("Sorting input...");
-		sortCustomers(customers, new CustomerComparator());
-		// Calculate sites for every customer
-		LOGGER.trace("Starting CalcLocation...");
-		LocationCalculator calculateLocation = new LocationCalculator();
-		LOGGER.trace("Running calculate...");
-		calculateLocation.calculate(customers);
-		/*
-		 * Sort order: 
-		 * LOCATION -> LANGUAGE -> STATIONERY -> PRESENTATION_ORDER -> 
-		 * SUB_BATCH -> SORT_FIELD -> FLEET_NO -> MSC -> GRP_ID
-		 */
-		LOGGER.trace("Sorting input...");
-		sortCustomers(customers, new CustomerComparatorWithLocation());
-		// Calculate EOGs ready for the batch engine
-		LOGGER.trace("Calculating EOGs...");
-		CalculateEndOfGroups eogs = new CalculateEndOfGroups();
-		eogs.calculate(customers);
-		/*
-		 * Sort order: 
-		 * LOCATION -> LANGUAGE -> STATIONERY -> PRESENTATION_ORDER ->
-		 *  SUB_BATCH -> SORT_FIELD -> FLEET_NO -> MSC -> GRP_ID
-		 */
-		LOGGER.trace("Sorting input...");
-		sortCustomers(customers, new CustomerComparatorWithLocation());
-		// Putting into batches that are above the 25 tray minimum
-		LOGGER.trace("Running Batch Engine...");
-		BatchEngine be = new BatchEngine(tenDigitJid, eightDigitJid);
-		be.batch(customers);
-	
-		LOGGER.trace("Creating UkMail Resources..."); 
-		CreateUkMailResources ukm = new CreateUkMailResources(customers, runNo); 
-		ukm.method(); 
-		
-		// Return to original order to map records row by row
-		LOGGER.trace("Sorting back to original order...");
-		sortCustomers(customers, new CustomerComparatorOriginalOrder());
-		// Dpf saves the changed details to the output file
-		LOGGER.trace("Saving DPF file...");
-		dpf.Save(customers);
-		LOGGER.trace("Data saved to: {}", outputFile);
+		try {
+			LOGGER.info("Starting uk.gov.dvla.osg.batch.Main");
+			// assign & validate command line args
+			LOGGER.trace("Assigning Args...");
+			assignArgs(args);
+			// load the Application Configuration file
+			LOGGER.trace("Loading AppConfig...");
+			AppConfig.init(propsFile);
+			// load customers from dpf file
+			LOGGER.trace("Initialising DPF Parser...");
+			DpfParser dpf = new DpfParser(inputFile, outputFile);
+			LOGGER.trace("Loading customers...");
+			ArrayList<Customer> customers = dpf.Load();
+			// Load Selector Lookup & Production Config files
+			LOGGER.trace("Loading Lookup Files...");
+			loadLookupFiles(customers);
+			// Sort Order: Language -> Presentation Priority
+			LOGGER.trace("Sorting input...");
+			sortCustomers(customers, new CustomerComparator());
+			// Calculate sites for every customer
+			LOGGER.trace("Starting CalcLocation...");
+			LocationCalculator calculateLocation = new LocationCalculator();
+			LOGGER.trace("Running calculate...");
+			calculateLocation.calculate(customers);
+			/*
+			 * Sort order: 
+			 * LOCATION -> LANGUAGE -> STATIONERY -> PRESENTATION_ORDER -> 
+			 * SUB_BATCH -> SORT_FIELD -> FLEET_NO -> MSC -> GRP_ID
+			 */
+			LOGGER.trace("Sorting input...");
+			sortCustomers(customers, new CustomerComparatorWithLocation());
+			// Calculate EOGs ready for the batch engine
+			LOGGER.trace("Calculating EOGs...");
+			CalculateEndOfGroups eogs = new CalculateEndOfGroups();
+			eogs.calculate(customers);
+			TotalPagesInGroup tpig = new TotalPagesInGroup();
+			tpig.calculate(customers);
+			/*
+			 * Sort order: 
+			 * LOCATION -> LANGUAGE -> STATIONERY -> PRESENTATION_ORDER ->
+			 *  SUB_BATCH -> SORT_FIELD -> FLEET_NO -> MSC -> GRP_ID
+			 */
+			LOGGER.trace("Sorting input...");
+			sortCustomers(customers, new CustomerComparatorWithLocation());
+			// Putting into batches that are above the 25 tray minimum
+			LOGGER.trace("Running Batch Engine...");
+			BatchEngine be = new BatchEngine(tenDigitJid, eightDigitJid);
+			be.batch(customers);
+
+			LOGGER.trace("Creating UkMail Resources..."); 
+			CreateUkMailResources ukm = new CreateUkMailResources(customers, runNo); 
+			ukm.method(); 
+			
+			// Return to original order to map records row by row
+			LOGGER.trace("Sorting back to original order...");
+			sortCustomers(customers, new CustomerComparatorOriginalOrder());
+			// Dpf saves the changed details to the output file
+			LOGGER.trace("Saving DPF file...");
+			dpf.Save(customers);
+			LOGGER.trace("Data saved to: {}", outputFile);
+		} catch (Exception ex) {
+			LOGGER.fatal(ExceptionUtils.getStackTrace(ex));
+			System.exit(1);
+		}
 	}
 
 	private static void assignArgs(String[] args) {
