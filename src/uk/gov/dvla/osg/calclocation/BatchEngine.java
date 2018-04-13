@@ -82,7 +82,8 @@ class BatchEngine {
 		Collections.sort(customers, new CustomerComparatorWithLocation());
 		countMscs(customers);
 		filterCustomers(customers);
-
+		Collections.sort(customers, new CustomerComparatorWithLocation());
+		
 		// Process ukMailCustomers
 		int customerIndex = 0;
 		pageCount = 0;
@@ -147,8 +148,6 @@ class BatchEngine {
 				prev = customer;
 			}
 		}
-		
-		//Collections.sort(customers, new CustomerComparatorWithLocation());
 
 		// Loop through all customers and set JID's, PID & batch sequence
 		int pid = 1;
@@ -164,9 +163,10 @@ class BatchEngine {
 			customer.setTenDigitJid(tenDigitJid);
 			customer.setEightDigitJid(eightDigitJid);
 			customer.setBatchSequence(batchSequence);
+			
+			//LOGGER.debug("Ten {} PID {} BT {} Doc ID {}", customer.getTenDigitJid(), customer.getSequenceInChild(), customer.getBatchName(), customer.getDocRef());
 			pid++;
 		}
-
 	}
 
 	/**
