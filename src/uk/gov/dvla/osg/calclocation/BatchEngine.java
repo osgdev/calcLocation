@@ -55,7 +55,7 @@ class BatchEngine {
 	private EnvelopeLookup envelopeLookup;
 	private PresentationConfiguration presConfig;
 	private ProductionConfiguration prodConfig;
-	private boolean processUkMail;
+	//private boolean processUkMail;
 	
 	BatchEngine(int tenDigitJid, int eightDigitJid) {
 		LOGGER.trace("Starting Batch Engine");
@@ -78,15 +78,19 @@ class BatchEngine {
 
 	public void batch(ArrayList<Customer> customers) {
 		
-		processUkMail = customers.stream().anyMatch(c -> Product.MM.equals(c.getProduct()) || Product.OCR.equals(c.getProduct()));
+		//processUkMail = customers.stream().anyMatch(c -> Product.MM.equals(c.getProduct()) || Product.OCR.equals(c.getProduct()));
 
 		// Adjust Multis when processing a UK Mail product - PB 25/04
-		if (processUkMail) {
+		//if (processUkMail) {
 			countMscs(customers);
 			adjustMultis(customers);
 			mscLookup.clear();
-			Collections.sort(customers, new CustomerComparatorWithLocation());
-		}
+		//} else {
+			// Set Multi's to UNSORTED when product is UNSORTED
+			//customers.stream().filter(cus -> MULTI.equals(cus.getBatchType()))
+			//				  .forEach(cus -> cus.setBatchType(UNSORTED));
+		//}
+		Collections.sort(customers, new CustomerComparatorWithLocation());
 		
 		countMscs(customers);
 		filterCustomers(customers);
@@ -372,7 +376,8 @@ class BatchEngine {
 		
 		for (Customer customer : allCustomers) {
 			// When using UNSORTED product type process all customers as nonUkMail - PB 25/04
-			if (processUkMail && ukmBatchTypes.contains(customer.getBatchType())) {
+			// if (processUkMail && ukmBatchTypes.contains(customer.getBatchType())) {
+			if (ukmBatchTypes.contains(customer.getBatchType())) {
 				if (mscLookup.get(customer.getTransactionID()) < minimumTrayVolume) {
 					// MSCS are under minimum tray volume so move to unsorted list
 					customer.setBatchType(BatchType.UNSORTED);
