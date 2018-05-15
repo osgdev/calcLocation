@@ -50,7 +50,7 @@ class BatchEngine {
 
 	private ArrayList<Customer> ukMailCustomers = new ArrayList<>();
 	private ArrayList<Customer> nonUkMailCustomers = new ArrayList<>();
-	private Map<Integer, Integer> mscLookup = new HashMap<>();
+	private Map<Integer, Counts> mscLookup = new HashMap<>();
 	private InsertLookup insertLookup;
 	private EnvelopeLookup envelopeLookup;
 	private PresentationConfiguration presConfig;
@@ -105,7 +105,7 @@ class BatchEngine {
 		for (Customer customer : ukMailCustomers) {
 			batchMax = getBatchMax(customer.getFullBatchType(), customer.getPaperSize());
 			boolean changeOfMsc = !customer.getMsc().equals(prev.getMsc());
-			int endIndex = mscLookup.get(customer.getTransactionID()) + customerIndex;
+			int endIndex = mscLookup.get(customer.getTransactionID()).getItemCount() + customerIndex;
 
 			if (firstCustomer) {
 				customer.setSob();
@@ -141,9 +141,10 @@ class BatchEngine {
 			firstCustomer = true;
 			prev = nonUkMailCustomers.get(0);
 			pageCount = 0;
-
+			//LOGGER.debug("Ten {} PID {} BT {} Doc ID {}", customer.getTenDigitJid(), customer.getSequenceInChild(), customer.getBatchName(), customer.getDocRef());
 			for (Customer customer : nonUkMailCustomers) {
 				batchMax = getBatchMax(customer.getFullBatchType(), customer.getPaperSize());
+				
 				customer.setMsc("");
 				if (firstCustomer) {
 					customer.setSob();
@@ -163,19 +164,18 @@ class BatchEngine {
 		// Loop through all customers and set JID's, PID & batch sequence
 		int pid = 1;
 		int batchSequence = 0;
-
 		for (Customer customer : customers) {
 			if (customer.isSob()) {
 				pid = 1;
 				batchSequence++;
 				tenDigitJid += jidInc;
+				LOGGER.debug("{} Job ID: {}", customer.getFullBatchType().name(), tenDigitJid);
 			}
 			customer.setSequenceInChild(pid);
 			customer.setTenDigitJid(tenDigitJid);
 			customer.setEightDigitJid(eightDigitJid);
 			customer.setBatchSequence(batchSequence);
 			
-			//LOGGER.debug("Ten {} PID {} BT {} Doc ID {}", customer.getTenDigitJid(), customer.getSequenceInChild(), customer.getBatchName(), customer.getDocRef());
 			pid++;
 		}
 	}
@@ -297,6 +297,7 @@ class BatchEngine {
 					for (Customer c : trays.get(trayIdx).getList()) {
 						pageCount += c.getNoOfPages();
 					}
+				restartPageCount = false;
 				}
 			}
 		}
@@ -311,8 +312,7 @@ class BatchEngine {
 		for (Customer customer : allCustomers) {
 			double weight = 0;
 			double size = 0;
-			if (MULTI.equals(customer.getBatchType())
-					&& mscLookup.get(customer.getTransactionID()) >= minimumTrayVolume) {
+			if (MULTI.equals(customer.getBatchType()) && mscLookup.get(customer.getTransactionID()).getGroupCount() >= minimumTrayVolume) {
 				// Multi Customer - over volume
 				if (!customer.isEog()) {
 					weight += customer.getWeight();
@@ -342,6 +342,7 @@ class BatchEngine {
 					customer.setBatchType(SORTED);
 				} else {
 					customer.setBatchType(UNSORTED);
+					customer.setProduct(Product.UNSORTED);
 				}
 				customer.setEog();
 				customer.setGroupId(null);
@@ -378,7 +379,7 @@ class BatchEngine {
 			// When using UNSORTED product type process all customers as nonUkMail - PB 25/04
 			// if (processUkMail && ukmBatchTypes.contains(customer.getBatchType())) {
 			if (ukmBatchTypes.contains(customer.getBatchType())) {
-				if (mscLookup.get(customer.getTransactionID()) < minimumTrayVolume) {
+				if (mscLookup.get(customer.getTransactionID()).getGroupCount() < minimumTrayVolume) {
 					// MSCS are under minimum tray volume so move to unsorted list
 					customer.setBatchType(BatchType.UNSORTED);
 					customer.setEog();
@@ -404,30 +405,39 @@ class BatchEngine {
 	}
 
 	/**
-	 * Count number of records with same transaciton type & same MSC. Customers of same type are assigned a transaction ID and this is stored in their properties. This allows for the group count to be looked up for each individual customer.
+	 * Count number of records with same transaciton type & same MSC. 
+	 * Customers of same type are assigned a transaction ID and this is stored in their properties. 
+	 * This allows for the group count to be looked up for each individual customer.
 	 * @param input
 	 */
 	private void countMscs(ArrayList<Customer> input) {
-		// Calculate the start time
+		
 		int transactionID = 1;
 		int groupCount = 0;
+		int itemCount = 0;
+		
 		Customer prev = input.get(0);
+		
 		for (Customer customer : input) {
 			// Check if customer has an MSC
 			if (StringUtils.isNotBlank(customer.getMsc()) && ukmBatchTypes.contains(customer.getBatchType())) {
-
+			    
+			    
 				if (!customer.equals(prev) || !customer.getMsc().equals(prev.getMsc())) {
 					transactionID++;
 					groupCount = 0;
-				}
+					itemCount = 0;
+				} 
 
 				if (customer.isEog()) {
 					groupCount++;
 				}
 
+				itemCount++;
+				
 				// Add result to lookup map
 				customer.setTransactionID(transactionID);
-				mscLookup.put(transactionID, groupCount);
+				mscLookup.put(transactionID, new Counts(groupCount, itemCount));
 				prev = customer;
 			}
 		}
