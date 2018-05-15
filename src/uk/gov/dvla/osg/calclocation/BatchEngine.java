@@ -144,7 +144,6 @@ class BatchEngine {
 			//LOGGER.debug("Ten {} PID {} BT {} Doc ID {}", customer.getTenDigitJid(), customer.getSequenceInChild(), customer.getBatchName(), customer.getDocRef());
 			for (Customer customer : nonUkMailCustomers) {
 				batchMax = getBatchMax(customer.getFullBatchType(), customer.getPaperSize());
-				
 				customer.setMsc("");
 				if (firstCustomer) {
 					customer.setSob();
@@ -169,7 +168,7 @@ class BatchEngine {
 				pid = 1;
 				batchSequence++;
 				tenDigitJid += jidInc;
-				LOGGER.debug("{} Job ID: {}", customer.getFullBatchType().name(), tenDigitJid);
+				//LOGGER.debug("{} Job ID: {}", customer.getFullBatchType().name(), tenDigitJid);
 			}
 			customer.setSequenceInChild(pid);
 			customer.setTenDigitJid(tenDigitJid);
