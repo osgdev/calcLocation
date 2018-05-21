@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import uk.gov.dvla.osg.calclocation.models.Counts;
 import uk.gov.dvla.osg.calclocation.models.Tray;
 import uk.gov.dvla.osg.common.classes.BatchType;
 import uk.gov.dvla.osg.common.classes.Customer;
@@ -141,7 +142,7 @@ class BatchEngine {
 			firstCustomer = true;
 			prev = nonUkMailCustomers.get(0);
 			pageCount = 0;
-			//LOGGER.debug("Ten {} PID {} BT {} Doc ID {}", customer.getTenDigitJid(), customer.getSequenceInChild(), customer.getBatchName(), customer.getDocRef());
+			
 			for (Customer customer : nonUkMailCustomers) {
 				batchMax = getBatchMax(customer.getFullBatchType(), customer.getPaperSize());
 				customer.setMsc("");
@@ -168,7 +169,6 @@ class BatchEngine {
 				pid = 1;
 				batchSequence++;
 				tenDigitJid += jidInc;
-				//LOGGER.debug("{} Job ID: {}", customer.getFullBatchType().name(), tenDigitJid);
 			}
 			customer.setSequenceInChild(pid);
 			customer.setTenDigitJid(tenDigitJid);
@@ -187,10 +187,11 @@ class BatchEngine {
 	 */
 	private ArrayList<Tray> setTraysForMsc(int startIndex, int endIndex) {
 
+	    
 		ArrayList<Tray> trays = new ArrayList<>();
 		// NEW MSC start fresh tray
 		Tray tray = new Tray();
-
+		
 		for (Customer customer : ukMailCustomers.subList(startIndex, endIndex)) {
 			if (customer.getNoOfPages() + pageCount <= batchMax) {
 				// Same Batch - check if weight and size would put tray over limits
@@ -230,7 +231,7 @@ class BatchEngine {
 	 */
 	private void adjustTrays(ArrayList<Tray> trays) {
 
-		int numberOfTrays = trays.size();
+	    int numberOfTrays = trays.size();
 		boolean adjust = false;
 
 		// check if any Tray is below minimum size
@@ -280,6 +281,7 @@ class BatchEngine {
 		} else {
 			// Trays don't need adjusting - check for SOB
 			boolean restartPageCount = false;
+			
 			for (int trayIdx = 0; trayIdx < trays.size(); trayIdx++) {
 				for (Customer customer : trays.get(trayIdx).getList()) {
 					if (customer.isSob()) {
@@ -296,14 +298,14 @@ class BatchEngine {
 					for (Customer c : trays.get(trayIdx).getList()) {
 						pageCount += c.getNoOfPages();
 					}
-				restartPageCount = false;
 				}
 			}
 		}
 	}
 
 	/**
-	 * Set weight and size for multi customer when above tray minimum. Set multis to Sorted (unsorted if sorted is ignored for Selector), when there are not enough envelopes (EOG's) to meet the minimumTrayVolume for Uk Mail.
+	 * Set weight and size for multi customer when above tray minimum. 
+	 * Set multis to Sorted (unsorted if sorted is ignored for Selector), when there are not enough envelopes (EOG's) to meet the minimumTrayVolume for Uk Mail.
 	 * @param allCustomers
 	 */
 	private void adjustMultis(ArrayList<Customer> allCustomers) {
@@ -369,7 +371,8 @@ class BatchEngine {
 	}
 
 	/**
-	 * Divides the original input into lists of Uk Mail customers and Non UK Mail customers. If number for the MSC is below the minimum volume, the batch type is changed to UnSorted.
+	 * Divides the original input into lists of Uk Mail customers and Non UK Mail customers. 
+	 * If number for the MSC is below the minimum volume, the batch type is changed to UnSorted.
 	 * @param allCustomers
 	 */
 	private void filterCustomers(ArrayList<Customer> allCustomers) {
