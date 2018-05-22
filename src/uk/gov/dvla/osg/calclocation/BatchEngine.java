@@ -79,6 +79,9 @@ class BatchEngine {
 
 	public void batch(ArrayList<Customer> customers) {
 		
+	    customers.stream().filter(customer -> UNSORTED.equals(customer.getBatchType()))
+	                      .forEach(customer -> customer.setMsc("99999"));
+	    
 		//processUkMail = customers.stream().anyMatch(c -> Product.MM.equals(c.getProduct()) || Product.OCR.equals(c.getProduct()));
 
 		// Adjust Multis when processing a UK Mail product - PB 25/04
@@ -344,6 +347,7 @@ class BatchEngine {
 				} else {
 					customer.setBatchType(UNSORTED);
 					customer.setProduct(Product.UNSORTED);
+					customer.setMsc("99999");
 				}
 				customer.setEog();
 				customer.setGroupId(null);
@@ -390,6 +394,7 @@ class BatchEngine {
 					customer.setSite(prodConfig.getSite(customer.getFullBatchType()));
 					// change product
 					customer.setProduct(Product.UNSORTED);
+					customer.setMsc("99999");
 					// change envelope
 					if (customer.getLang().equals(Language.E)) {
 						customer.setEnvelope(prodConfig.getEnvelopeEnglishUnsorted());
