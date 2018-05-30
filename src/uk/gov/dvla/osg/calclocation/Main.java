@@ -4,11 +4,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import uk.gov.dvla.osg.common.classes.BatchType;
 import uk.gov.dvla.osg.common.classes.Customer;
 import uk.gov.dvla.osg.common.classes.Selector;
 import uk.gov.dvla.osg.common.config.EnvelopeLookup;
@@ -76,22 +79,27 @@ public class Main {
 			 */
 			LOGGER.trace("Sorting input...");
 			sortCustomers(customers, new CustomerComparatorWithLocation());
-			// Putting into batches that are above the 25 tray minimum
-			LOGGER.trace("Running Batch Engine...");
-			BatchEngine be = new BatchEngine(tenDigitJid, eightDigitJid);
-			be.batch(customers);
-
-			LOGGER.trace("Creating UkMail Resources..."); 
-			CreateUkMailResources ukm = new CreateUkMailResources(customers, runNo); 
-			ukm.method(); 
-			
-			// Return to original order to map records row by row
-			LOGGER.trace("Sorting back to original order...");
-			sortCustomers(customers, new CustomerComparatorOriginalOrder());
-			// Dpf saves the changed details to the output file
-			LOGGER.trace("Saving DPF file...");
-			dpf.Save(customers);
-			LOGGER.trace("Data saved to: {}", outputFile);
+			// Set MSC to 99999 on Unsorted to enable batching and tray sorting
+            LOGGER.trace("Adding temp MSC to UNSORTED...");
+            setMscOnUnsorted(customers);
+            // Putting into batches that are above the 25 tray minimum
+            LOGGER.trace("Running Batch Engine...");
+            BatchEngine be = new BatchEngine(tenDigitJid, eightDigitJid);
+            be.batch(customers);
+            LOGGER.trace("Creating UkMail Resources..."); 
+            CreateUkMailResources ukm = new CreateUkMailResources(customers, runNo); 
+            ukm.method(); 
+            // Remove the 99999 MSC that was set on Unsorted
+            removeMscOnUnsorted(customers);
+            // Return to original order to map records row by row
+            LOGGER.trace("Sorting back to original order...");
+            sortCustomers(customers, new CustomerComparatorOriginalOrder());
+            // Dpf saves the changed details to the output file
+            LOGGER.trace("Saving DPF file...");
+            dpf.Save(customers);
+            LOGGER.trace("Data saved to: {}", outputFile);
+            String summary = summaryPrint(customers);
+            LOGGER.debug(summary);
 		} catch (Exception ex) {
 			LOGGER.fatal(ExceptionUtils.getStackTrace(ex));
 			System.exit(1);
@@ -101,24 +109,32 @@ public class Main {
 	private static void assignArgs(String[] args) {
 		if (args.length != EXPECTED_NO_OF_ARGS) {
 			LOGGER.fatal(
-					"Incorrect number of args parsed '{}' expecting '{}'. Args are 1.input file, 2.output file, 3.props file, 4.jobId, 5.Runno 6.ParentJid.",
+					"Incorrect number of args parsed '{}' expecting '{}'. "
+					+ "Args are "
+					+ "1. Props file, "
+					+ "2. Input file, "
+					+ "3. Output file, "
+					+ "4. Run No "
+					+ "5. 8 Digit Job Id, "
+					+ "6. 10 Digit Parent Jid.",
 					args.length, EXPECTED_NO_OF_ARGS);
 			System.exit(1);
 		}
 		
 		propsFile = args[0];
 		if (!(new File(propsFile).exists())) {
-			LOGGER.fatal("File '{}' doesn't exist", propsFile);
+			LOGGER.fatal("Properties File '{}' doesn't exist", propsFile);
 			System.exit(1);
 		}
 		
 		inputFile = args[1];
 		if (!(new File(inputFile).exists())) {
-			LOGGER.fatal("File '{}' doesn't exist", inputFile);
+			LOGGER.fatal("Input File '{}' doesn't exist", inputFile);
 			System.exit(1);
 		}
 
 		outputFile = args[2];
+		//TODO: Validate output file can be written
 		runNo = args[3];
 		eightDigitJid = Integer.parseInt(args[4]);
 		tenDigitJid = Integer.parseInt(args[5]);
@@ -160,4 +176,25 @@ public class Main {
 			System.exit(1);
 		}
 	}
+	
+	   private static void setMscOnUnsorted(ArrayList<Customer> customers) {
+	        customers.stream().filter(customer -> BatchType.UNSORTED.equals(customer.getBatchType()))
+	        .forEach(customer -> customer.setMsc("99999")); 
+	    }
+
+	    private static void removeMscOnUnsorted(ArrayList<Customer> customers) {
+	        customers.stream().filter(customer -> BatchType.UNSORTED.equals(customer.getBatchType()))
+	        .forEach(customer -> customer.setMsc("")); 
+	    }
+	    
+	    /**
+        * Prints a summary of the number of items for each batch type.
+        * @param docProps
+        */
+        private static String summaryPrint(ArrayList<Customer> customers) {
+            Map<String, Long> counting = customers.stream().collect(
+                    Collectors.groupingBy(Customer::getFullBatchName, Collectors.counting()));
+
+            return counting.toString();
+        }
 }

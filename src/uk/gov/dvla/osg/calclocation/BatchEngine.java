@@ -78,27 +78,16 @@ class BatchEngine {
 	}
 
 	public void batch(ArrayList<Customer> customers) {
-		
-	    customers.stream().filter(customer -> UNSORTED.equals(customer.getBatchType()))
-	                      .forEach(customer -> customer.setMsc("99999"));
 	    
-		//processUkMail = customers.stream().anyMatch(c -> Product.MM.equals(c.getProduct()) || Product.OCR.equals(c.getProduct()));
-
-		// Adjust Multis when processing a UK Mail product - PB 25/04
-		//if (processUkMail) {
-			countMscs(customers);
-			adjustMultis(customers);
-			mscLookup.clear();
-		//} else {
-			// Set Multi's to UNSORTED when product is UNSORTED
-			//customers.stream().filter(cus -> MULTI.equals(cus.getBatchType()))
-			//				  .forEach(cus -> cus.setBatchType(UNSORTED));
-		//}
+		countMscs(customers);
+		adjustMultis(customers);
 		Collections.sort(customers, new CustomerComparatorWithLocation());
 		
 		countMscs(customers);
-		filterCustomers(customers);
-		Collections.sort(customers, new CustomerComparatorWithLocation());
+        filterCustomers(customers);
+        Collections.sort(customers, new CustomerComparatorWithLocation());
+        Collections.sort(ukMailCustomers, new CustomerComparatorWithLocation());
+        countMscs(customers);
 		
 		// Process ukMailCustomers
 		int customerIndex = 0;
@@ -129,7 +118,13 @@ class BatchEngine {
 				adjustTrays(trays);
 			} else if (!changeOfMsc && !prev.equals(customer)) {
 				// Same MSC, Different Batch Type
-				LOGGER.fatal("NOT YET IMPLEMENTED METHOD! MSC {}", customer.getMsc());
+	             // NEW BATCH
+                pageCount = 0;
+                customer.setSob();
+                // Same MSC, different Stationery or Transaction Type
+                ArrayList<Tray> trays = setTraysForMsc(customerIndex, endIndex);
+                adjustTrays(trays);
+				//LOGGER.fatal("NOT YET IMPLEMENTED METHOD! MSC {}\n{}", customer.getMsc(), customer.toString());
 			} else {
 				// Same MSC, Same Batch Type -> do nothing
 			}
@@ -418,7 +413,9 @@ class BatchEngine {
 	 * @param input
 	 */
 	private void countMscs(ArrayList<Customer> input) {
-		
+	    
+	    mscLookup.clear();  // Reset Map
+	    
 		int transactionID = 1;
 		int groupCount = 0;
 		int itemCount = 0;
