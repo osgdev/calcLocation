@@ -34,9 +34,9 @@ public class Main {
 	private static int eightDigitJid;
 	
 	public static void main(String[] args) throws Exception {
+	    LOGGER.info("---- CalcLocation Started ----");
 
 		try {
-			LOGGER.info("Starting uk.gov.dvla.osg.batch.Main");
 			// assign & validate command line args
 			LOGGER.trace("Assigning Args...");
 			assignArgs(args);
@@ -104,6 +104,7 @@ public class Main {
 			LOGGER.fatal(ExceptionUtils.getStackTrace(ex));
 			System.exit(1);
 		}
+		LOGGER.info("---- CalcLocation Finished ----");
 	}
 
 	private static void assignArgs(String[] args) {
