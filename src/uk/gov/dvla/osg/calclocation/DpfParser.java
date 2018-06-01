@@ -167,12 +167,12 @@ class DpfParser {
 					LOGGER.fatal("Envelope {}", appConfig.getOuterEnvelope());
 				}
 				try {
-					writer.addValue(appConfig.getMailingProduct(), customer.getProduct());
+					writer.addValue(appConfig.getMailingProduct(), customer.getProduct().name());
 				} catch (Exception ex) {
 					LOGGER.fatal("Mailing Product {}", appConfig.getMailingProduct());
 				}
 				try {
-					writer.addValue(appConfig.getBatchTypeFieldName(), customer.getBatchType());
+					writer.addValue(appConfig.getBatchTypeFieldName(), customer.getBatchName());
 				} catch (Exception ex) {
 					LOGGER.fatal("Batch Type {}", appConfig.getBatchTypeFieldName());
 				}

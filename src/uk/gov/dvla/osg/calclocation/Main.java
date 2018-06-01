@@ -139,6 +139,8 @@ public class Main {
 		runNo = args[3];
 		eightDigitJid = Integer.parseInt(args[4]);
 		tenDigitJid = Integer.parseInt(args[5]);
+		
+		LOGGER.trace("ARGS: {} {}", inputFile, outputFile);
 	}
 
 /*	private static AppConfig loadPropertiesFile() throws Exception {

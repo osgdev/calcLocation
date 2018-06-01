@@ -56,7 +56,6 @@ class BatchEngine {
 	private EnvelopeLookup envelopeLookup;
 	private PresentationConfiguration presConfig;
 	private ProductionConfiguration prodConfig;
-	//private boolean processUkMail;
 	
 	BatchEngine(int tenDigitJid, int eightDigitJid) {
 		LOGGER.trace("Starting Batch Engine");
@@ -87,7 +86,7 @@ class BatchEngine {
         filterCustomers(customers);
         Collections.sort(customers, new CustomerComparatorWithLocation());
         Collections.sort(ukMailCustomers, new CustomerComparatorWithLocation());
-        countMscs(customers);
+        countMscs(ukMailCustomers);
 		
 		// Process ukMailCustomers
 		int customerIndex = 0;
@@ -98,8 +97,13 @@ class BatchEngine {
 		for (Customer customer : ukMailCustomers) {
 			batchMax = getBatchMax(customer.getFullBatchType(), customer.getPaperSize());
 			boolean changeOfMsc = !customer.getMsc().equals(prev.getMsc());
-			int endIndex = mscLookup.get(customer.getTransactionID()).getItemCount() + customerIndex;
-
+			int endIndex = 0;
+			try {
+			endIndex = mscLookup.get(customer.getTransactionID()).getItemCount() + customerIndex;
+			} catch (Exception ex) {
+			  LOGGER.debug(customer.toString());
+			  System.exit(1);
+			}
 			if (firstCustomer) {
 				customer.setSob();
 				ArrayList<Tray> trays = setTraysForMsc(customerIndex, endIndex);
@@ -117,14 +121,12 @@ class BatchEngine {
 				ArrayList<Tray> trays = setTraysForMsc(customerIndex, endIndex);
 				adjustTrays(trays);
 			} else if (!changeOfMsc && !prev.equals(customer)) {
-				// Same MSC, Different Batch Type
 	             // NEW BATCH
                 pageCount = 0;
                 customer.setSob();
                 // Same MSC, different Stationery or Transaction Type
                 ArrayList<Tray> trays = setTraysForMsc(customerIndex, endIndex);
                 adjustTrays(trays);
-				//LOGGER.fatal("NOT YET IMPLEMENTED METHOD! MSC {}\n{}", customer.getMsc(), customer.toString());
 			} else {
 				// Same MSC, Same Batch Type -> do nothing
 			}
@@ -224,7 +226,11 @@ class BatchEngine {
 	}
 
 	/**
-	 * If any trays are below the minimum volume accepted by UK Mail, then all envelopes are put into a temporary list which is divided up according to the number of trays that were passed into the method. The result is that all items are evenly spread across all trays without going over the tray limits. A side-effect of this way of splitting documents is that SOT and SOB markers may move out of position, so extra checks are utilised that move markers to the start of the relevant tray and page-counts are re-started to keep batches synchronised.
+	 * If any trays are below the minimum volume accepted by UK Mail, 
+	 * then all envelopes are put into a temporary list which is divided up according to the number of trays that were passed into the method. 
+	 * The result is that all items are evenly spread across all trays without going over the tray limits. 
+	 * A side-effect of this way of splitting documents is that SOT and SOB markers may move out of position, 
+	 * so extra checks are utilised that move markers to the start of the relevant tray and page-counts are re-started to keep batches synchronised.
 	 * @param trays Trays for same mailsort code.
 	 */
 	private void adjustTrays(ArrayList<Tray> trays) {
@@ -303,7 +309,8 @@ class BatchEngine {
 
 	/**
 	 * Set weight and size for multi customer when above tray minimum. 
-	 * Set multis to Sorted (unsorted if sorted is ignored for Selector), when there are not enough envelopes (EOG's) to meet the minimumTrayVolume for Uk Mail.
+	 * Set multis to Sorted (unsorted if sorted is ignored for Selector), 
+	 * when there are not enough envelopes (EOG's) to meet the minimumTrayVolume for Uk Mail.
 	 * @param allCustomers
 	 */
 	private void adjustMultis(ArrayList<Customer> allCustomers) {
@@ -375,28 +382,29 @@ class BatchEngine {
 	 * @param allCustomers
 	 */
 	private void filterCustomers(ArrayList<Customer> allCustomers) {
-		
 		for (Customer customer : allCustomers) {
-			// When using UNSORTED product type process all customers as nonUkMail - PB 25/04
 			// if (processUkMail && ukmBatchTypes.contains(customer.getBatchType())) {
 			if (ukmBatchTypes.contains(customer.getBatchType())) {
 				if (mscLookup.get(customer.getTransactionID()).getGroupCount() < minimumTrayVolume) {
 					// MSCS are under minimum tray volume so move to unsorted list
 					customer.setBatchType(BatchType.UNSORTED);
+					customer.setProduct(Product.UNSORTED);
+					customer.setMsc("99999");
 					customer.setEog();
 					customer.setPresentationPriority(presConfig.lookupRunOrder(customer.getBatchName()));
 					// Change location
 					customer.setSite(prodConfig.getSite(customer.getFullBatchType()));
-					// change product
-					customer.setProduct(Product.UNSORTED);
-					customer.setMsc("99999");
 					// change envelope
 					if (customer.getLang().equals(Language.E)) {
 						customer.setEnvelope(prodConfig.getEnvelopeEnglishUnsorted());
 					} else {
 						customer.setEnvelope(prodConfig.getEnvelopeWelshUnsorted());
 					}
-					nonUkMailCustomers.add(customer);
+					if (ukmBatchTypes.contains(BatchType.UNSORTED)) {
+					    ukMailCustomers.add(customer);
+					} else {
+					    nonUkMailCustomers.add(customer);
+					}
 				} else {
 					ukMailCustomers.add(customer);
 				}
