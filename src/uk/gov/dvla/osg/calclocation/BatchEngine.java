@@ -85,8 +85,12 @@ class BatchEngine {
 		countMscs(customers);
         filterCustomers(customers);
         Collections.sort(customers, new CustomerComparatorWithLocation());
-        Collections.sort(ukMailCustomers, new CustomerComparatorWithLocation());
-        countMscs(ukMailCustomers);
+
+        // Throws indexOutOfBounds if empty - PB 04/06
+        if (ukMailCustomers.size() > 0) {
+            Collections.sort(ukMailCustomers, new CustomerComparatorWithLocation());
+            countMscs(ukMailCustomers);
+        }
 		
 		// Process ukMailCustomers
 		int customerIndex = 0;

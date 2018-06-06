@@ -87,7 +87,6 @@ class DpfParser {
 			customer.setSize(Double.parseDouble(str[1]));
 			customer.setEnvelope(record.getString(appConfig.getOuterEnvelope()));
 			customer.setProduct(record.getString(appConfig.getMailingProduct()));
-			
 			customer.setPresentationPriority(record.getInt(appConfig.getPresentationPriorityField()));
 			Integer tpig = record.getString(appConfig.getTotalNumberOfPagesInGroupField()).equals("") ? null: record.getInt(appConfig.getTotalNumberOfPagesInGroupField());
 			if (tpig != null) customer.setTotalPagesInGroup(tpig);
@@ -167,9 +166,9 @@ class DpfParser {
 					LOGGER.fatal("Envelope {}", appConfig.getOuterEnvelope());
 				}
 				try {
-					writer.addValue(appConfig.getMailingProduct(), customer.getProduct().name());
+					writer.addValue(appConfig.getMailingProduct(), customer.getProduct());
 				} catch (Exception ex) {
-					LOGGER.fatal("Mailing Product {}", appConfig.getMailingProduct());
+					LOGGER.fatal("Error writing Mailing Product {} : BatchType {}", appConfig.getMailingProduct(), customer.getBatchName());
 				}
 				try {
 					writer.addValue(appConfig.getBatchTypeFieldName(), customer.getBatchName());
