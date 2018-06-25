@@ -12,7 +12,7 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/new - CommonClasses"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/new - RPD_CreateUkMailResources"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/CommonClasses"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
