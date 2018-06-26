@@ -1,10 +1,7 @@
 package uk.gov.dvla.osg.calclocation;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -15,13 +12,7 @@ import org.apache.logging.log4j.Logger;
 import uk.gov.dvla.osg.common.classes.BatchType;
 import uk.gov.dvla.osg.common.classes.Customer;
 import uk.gov.dvla.osg.common.classes.Selector;
-import uk.gov.dvla.osg.common.config.EnvelopeLookup;
-import uk.gov.dvla.osg.common.config.InsertLookup;
-import uk.gov.dvla.osg.common.config.PapersizeLookup;
-import uk.gov.dvla.osg.common.config.PostageConfiguration;
-import uk.gov.dvla.osg.common.config.PresentationConfiguration;
-import uk.gov.dvla.osg.common.config.ProductionConfiguration;
-import uk.gov.dvla.osg.common.config.SelectorLookup;
+import uk.gov.dvla.osg.common.config.*;
 import uk.gov.dvla.osg.ukmail.resources.CreateUkMailResources;
 
 public class Main {
@@ -218,7 +209,7 @@ public class Main {
     }
 
     private static void removeMscOnUnsorted(ArrayList<Customer> customers) {
-        customers.stream().filter(customer -> BatchType.UNSORTED.equals(customer.getBatchType()))
+        customers.stream().filter(customer -> customer.getMsc().equals("99999"))
                 .forEach(customer -> customer.setMsc(""));
     }
 

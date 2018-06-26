@@ -2,11 +2,7 @@ package uk.gov.dvla.osg.calclocation;
 
 import static uk.gov.dvla.osg.common.classes.BatchType.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -14,17 +10,8 @@ import org.apache.logging.log4j.Logger;
 
 import uk.gov.dvla.osg.calclocation.models.Counts;
 import uk.gov.dvla.osg.calclocation.models.Tray;
-import uk.gov.dvla.osg.common.classes.BatchType;
-import uk.gov.dvla.osg.common.classes.Customer;
-import uk.gov.dvla.osg.common.classes.FullBatchType;
-import uk.gov.dvla.osg.common.classes.Language;
-import uk.gov.dvla.osg.common.classes.Product;
-import uk.gov.dvla.osg.common.config.EnvelopeLookup;
-import uk.gov.dvla.osg.common.config.InsertLookup;
-import uk.gov.dvla.osg.common.config.PapersizeLookup;
-import uk.gov.dvla.osg.common.config.PostageConfiguration;
-import uk.gov.dvla.osg.common.config.PresentationConfiguration;
-import uk.gov.dvla.osg.common.config.ProductionConfiguration;
+import uk.gov.dvla.osg.common.classes.*;
+import uk.gov.dvla.osg.common.config.*;
 
 /**
  * Sets and adjusts trays to ensure they are within UK Mail limits. 
@@ -323,6 +310,7 @@ class BatchEngine {
 			double weight = 0;
 			double size = 0;
 			if (MULTI.equals(customer.getBatchType()) && mscLookup.get(customer.getTransactionID()).getGroupCount() >= minimumTrayVolume) {
+			    
 				// Multi Customer - over volume
 				if (!customer.isEog()) {
 					weight += customer.getWeight();
@@ -351,13 +339,17 @@ class BatchEngine {
 				if (!prodConfig.getSite(FullBatchType.valueOf(SORTED + customer.getLang().name())).equals("X")) {
 					customer.setBatchType(SORTED);
 				} else {
-					customer.setBatchType(UNSORTED);
+				    if (prodConfig.isMultiUnsorted()) {				        
+				        customer.updateBatchType(MULTI, presConfig.lookupRunOrder(MULTI));
+				    } else {
+				        customer.updateBatchType(UNSORTED, presConfig.lookupRunOrder(UNSORTED));
+				        customer.setEog();
+		                customer.setGroupId(null);
+				    }
 					customer.setProduct(Product.UNSORTED);
 					customer.setMsc("99999");
 				}
-				customer.setEog();
-				customer.setGroupId(null);
-				customer.setPresentationPriority(presConfig.lookupRunOrder(customer.getBatchName()));
+				
 				// change envelope
 				if (customer.getLang().equals(Language.E)) {
 					customer.setEnvelope(ProductionConfiguration.getInstance().getEnvelopeEnglishMm());
@@ -387,15 +379,20 @@ class BatchEngine {
 	 */
 	private void filterCustomers(ArrayList<Customer> allCustomers) {
 		for (Customer customer : allCustomers) {
-			// if (processUkMail && ukmBatchTypes.contains(customer.getBatchType())) {
 			if (ukmBatchTypes.contains(customer.getBatchType())) {
 				if (mscLookup.get(customer.getTransactionID()).getGroupCount() < minimumTrayVolume) {
 					// MSCS are under minimum tray volume so move to unsorted list
+                    if (prodConfig.isMultiUnsorted()) {                       
+                        customer.updateBatchType(MULTI, presConfig.lookupRunOrder(MULTI));
+                    } else {
+                        customer.updateBatchType(UNSORTED, presConfig.lookupRunOrder(UNSORTED));
+                        customer.setEog();
+                        customer.setGroupId(null);
+                    }
 					customer.setBatchType(BatchType.UNSORTED);
 					customer.setProduct(Product.UNSORTED);
 					customer.setMsc("99999");
-					customer.setEog();
-					customer.setPresentationPriority(presConfig.lookupRunOrder(customer.getBatchName()));
+					
 					// Change location
 					customer.setSite(prodConfig.getSite(customer.getFullBatchType()));
 					// change envelope
