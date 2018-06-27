@@ -339,15 +339,14 @@ class BatchEngine {
 				if (!prodConfig.getSite(FullBatchType.valueOf(SORTED + customer.getLang().name())).equals("X")) {
 					customer.setBatchType(SORTED);
 				} else {
-				    if (prodConfig.isMultiUnsorted()) {				        
-				        customer.updateBatchType(MULTI, presConfig.lookupRunOrder(MULTI));
-				    } else {
-				        customer.updateBatchType(UNSORTED, presConfig.lookupRunOrder(UNSORTED));
-				        customer.setEog();
-		                customer.setGroupId(null);
-				    }
-					customer.setProduct(Product.UNSORTED);
-					customer.setMsc("99999");
+				    customer.updateBatchType(UNSORTED, presConfig.lookupRunOrder(UNSORTED));
+				    customer.setProduct(Product.UNSORTED);
+                    customer.setMsc("99999");
+				    // If MultiUnsorted is switched off then set all docs as singles (EOG) else leave the groups as they are
+	                if (!prodConfig.isMultiUnsorted()) {
+	                    customer.setEog();
+	                    customer.setGroupId(null);
+	                }
 				}
 				
 				// change envelope
@@ -382,16 +381,16 @@ class BatchEngine {
 			if (ukmBatchTypes.contains(customer.getBatchType())) {
 				if (mscLookup.get(customer.getTransactionID()).getGroupCount() < minimumTrayVolume) {
 					// MSCS are under minimum tray volume so move to unsorted list
-                    if (prodConfig.isMultiUnsorted()) {                       
-                        customer.updateBatchType(MULTI, presConfig.lookupRunOrder(MULTI));
-                    } else {
-                        customer.updateBatchType(UNSORTED, presConfig.lookupRunOrder(UNSORTED));
-                        customer.setEog();
-                        customer.setGroupId(null);
-                    }
+                    customer.updateBatchType(UNSORTED, presConfig.lookupRunOrder(UNSORTED));
 					customer.setBatchType(BatchType.UNSORTED);
 					customer.setProduct(Product.UNSORTED);
 					customer.setMsc("99999");
+					
+					// If MultiUnsorted is switched off then set all docs as singles (EOG) else leave the groups as they are
+					if (!prodConfig.isMultiUnsorted()) {
+                        customer.setEog();
+                        customer.setGroupId(null);
+                    }
 					
 					// Change location
 					customer.setSite(prodConfig.getSite(customer.getFullBatchType()));
