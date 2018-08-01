@@ -1,30 +1,18 @@
-package uk.gov.dvla.osg.calclocation;
+package uk.gov.dvla.osg.calclocation.engine;
 
-import static uk.gov.dvla.osg.common.classes.BatchType.*;
+import static uk.gov.dvla.osg.common.enums.BatchType.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import uk.gov.dvla.osg.calclocation.models.Counts;
-import uk.gov.dvla.osg.calclocation.models.Tray;
-import uk.gov.dvla.osg.common.classes.BatchType;
+import uk.gov.dvla.osg.calclocation.comparators.CustomerComparatorWithLocation;
+import uk.gov.dvla.osg.calclocation.main.AppConfig;
 import uk.gov.dvla.osg.common.classes.Customer;
-import uk.gov.dvla.osg.common.classes.FullBatchType;
-import uk.gov.dvla.osg.common.classes.Language;
-import uk.gov.dvla.osg.common.classes.Product;
-import uk.gov.dvla.osg.common.config.EnvelopeLookup;
-import uk.gov.dvla.osg.common.config.InsertLookup;
-import uk.gov.dvla.osg.common.config.PapersizeLookup;
-import uk.gov.dvla.osg.common.config.PostageConfiguration;
-import uk.gov.dvla.osg.common.config.PresentationConfiguration;
-import uk.gov.dvla.osg.common.config.ProductionConfiguration;
+import uk.gov.dvla.osg.common.config.*;
+import uk.gov.dvla.osg.common.enums.*;
 
 /**
  * Sets and adjusts trays to ensure they are within UK Mail limits. 
@@ -33,7 +21,7 @@ import uk.gov.dvla.osg.common.config.ProductionConfiguration;
  * @author OSG
  *
  */
-class BatchEngine {
+public class BatchEngine {
 
 	private static final Logger LOGGER = LogManager.getLogger();
 
@@ -57,7 +45,7 @@ class BatchEngine {
 	private PresentationConfiguration presConfig;
 	private ProductionConfiguration prodConfig;
 	
-	BatchEngine(int tenDigitJid, int eightDigitJid) {
+	public BatchEngine(int tenDigitJid, int eightDigitJid) {
 		LOGGER.trace("Starting Batch Engine");
 		this.eightDigitJid = eightDigitJid;
 		this.tenDigitJid = tenDigitJid;

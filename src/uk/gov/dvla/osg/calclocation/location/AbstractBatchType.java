@@ -1,13 +1,13 @@
-package uk.gov.dvla.osg.calclocation.models;
+package uk.gov.dvla.osg.calclocation.location;
 
-import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import uk.gov.dvla.osg.common.classes.Customer;
 
 
-public abstract class BatchType {
+public abstract class AbstractBatchType {
 	
 	private static final Logger LOGGER = LogManager.getLogger();
 
@@ -20,7 +20,7 @@ public abstract class BatchType {
 	// Number of customers we keep adding til we hit numberToFf
 	protected int tally;
 	
-	public BatchType(String site) {
+	public AbstractBatchType(String site) {
 		this.totalCustomers = 0;
 		this.tally = 0;
 		
@@ -28,15 +28,12 @@ public abstract class BatchType {
 			this.percentToFf = 1.0;
 		} else if (site.equalsIgnoreCase("m")) {
 			this.percentToFf = 0.0;
-		} else if (NumberUtils.isCreatable(site)) {
+		} else if (StringUtils.isNumeric(site)) {
 			this.percentToFf = Double.parseDouble(site) / 100;
 		} else {
 			LOGGER.warn("Invalid site entry in lookup file! Site is '{}'", site);
-			//System.exit(1);
 		}
 	}
-	
-	public abstract void addCustomer(Customer customer);
 	
 	public int getCustomerCount() {
 		return totalCustomers;
@@ -54,6 +51,7 @@ public abstract class BatchType {
 		return tally;
 	}
 	
+	public abstract void addCustomer(Customer customer);
 	public abstract void calculate();
 	public abstract String getSite(Customer customer);
 }

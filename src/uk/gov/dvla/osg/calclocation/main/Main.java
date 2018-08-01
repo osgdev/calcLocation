@@ -1,10 +1,7 @@
-package uk.gov.dvla.osg.calclocation;
+package uk.gov.dvla.osg.calclocation.main;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -12,16 +9,17 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import uk.gov.dvla.osg.common.classes.BatchType;
+import uk.gov.dvla.osg.calclocation.comparators.CustomerComparator;
+import uk.gov.dvla.osg.calclocation.comparators.CustomerComparatorOriginalOrder;
+import uk.gov.dvla.osg.calclocation.comparators.CustomerComparatorWithLocation;
+import uk.gov.dvla.osg.calclocation.engine.BatchEngine;
+import uk.gov.dvla.osg.calclocation.location.LocationCalculator;
+import uk.gov.dvla.osg.calclocation.methods.CalculateEndOfGroups;
+import uk.gov.dvla.osg.calclocation.methods.TotalPagesInGroup;
 import uk.gov.dvla.osg.common.classes.Customer;
 import uk.gov.dvla.osg.common.classes.Selector;
-import uk.gov.dvla.osg.common.config.EnvelopeLookup;
-import uk.gov.dvla.osg.common.config.InsertLookup;
-import uk.gov.dvla.osg.common.config.PapersizeLookup;
-import uk.gov.dvla.osg.common.config.PostageConfiguration;
-import uk.gov.dvla.osg.common.config.PresentationConfiguration;
-import uk.gov.dvla.osg.common.config.ProductionConfiguration;
-import uk.gov.dvla.osg.common.config.SelectorLookup;
+import uk.gov.dvla.osg.common.config.*;
+import uk.gov.dvla.osg.common.enums.BatchType;
 import uk.gov.dvla.osg.ukmail.resources.CreateUkMailResources;
 
 public class Main {
@@ -61,6 +59,7 @@ public class Main {
             LocationCalculator calculateLocation = new LocationCalculator();
             LOGGER.trace("Running calculate...");
             calculateLocation.calculate(customers);
+           
             /*
              * Sort order: LOCATION -> LANGUAGE -> STATIONERY -> PRESENTATION_ORDER -> SUB_BATCH -> SORT_FIELD -> FLEET_NO -> MSC -> GRP_ID
              */
@@ -107,8 +106,10 @@ public class Main {
 
     private static void assignArgs(String[] args) {
         if (args.length != EXPECTED_NO_OF_ARGS) {
-            LOGGER.fatal("Incorrect number of args parsed '{}' expecting '{}'. " + "Args are " + "1. Props file, "
-                    + "2. Input file, " + "3. Output file, " + "4. Run No, " + "5. 8 Digit Job Id, "
+            LOGGER.fatal("Incorrect number of args parsed '{}' expecting '{}'. " 
+                    + "Args are " + "1. Props file, "
+                    + "2. Input file, " + "3. Output file, " + "4. Run No, " 
+                    + "5. 8 Digit Job Id, "
                     + "6. 10 Digit Parent Jid.", args.length, EXPECTED_NO_OF_ARGS);
             System.exit(1);
         }
@@ -128,11 +129,6 @@ public class Main {
         }
 
         outputFile = args[2];
-/*        boolean writable = new File(outputFile).canWrite();
-        if (!writable) {
-            LOGGER.fatal("Unable to write output file [{}] to disk.", outputFile);
-            System.exit(1);
-        }*/
 
         runNo = args[3];
         boolean runNoIsNumeric = StringUtils.isNumeric(runNo);

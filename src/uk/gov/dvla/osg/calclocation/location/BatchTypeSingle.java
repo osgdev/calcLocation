@@ -1,8 +1,8 @@
-package uk.gov.dvla.osg.calclocation.models;
+package uk.gov.dvla.osg.calclocation.location;
 
 import uk.gov.dvla.osg.common.classes.Customer;
 
-public class BatchTypeSingle extends BatchType {
+public class BatchTypeSingle extends AbstractBatchType {
 	
 	public BatchTypeSingle(String site) {
 		super(site);
@@ -23,8 +23,7 @@ public class BatchTypeSingle extends BatchType {
 		if (tally < numberToFf) {
 			increaseCount();
 			return "F";
-		} else {
-			return "M";
 		}
+			return "M";
 	}
 }

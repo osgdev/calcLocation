@@ -1,9 +1,6 @@
-package uk.gov.dvla.osg.calclocation;
+package uk.gov.dvla.osg.calclocation.main;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
@@ -15,7 +12,7 @@ import org.apache.logging.log4j.Logger;
  * path information for configuration files.
  *
  */
-class AppConfig {
+public class AppConfig {
 	
 	private static final Logger LOGGER = LogManager.getLogger();
 	
@@ -66,8 +63,7 @@ class AppConfig {
 	private AppConfig() {
 
 		Properties prop = new Properties();
-		try {
-			InputStream input = new FileInputStream(filename);
+		try (InputStream input = new FileInputStream(filename)) {
 			prop.load(input);
 		} catch (IOException ex) {
 			LOGGER.fatal("Unable to load Application Configuration from file - [{}] {}", filename, ex.getMessage());

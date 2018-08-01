@@ -1,4 +1,4 @@
-package uk.gov.dvla.osg.calclocation;
+package uk.gov.dvla.osg.calclocation.main;
 
 import java.io.File;
 import java.io.FileWriter;

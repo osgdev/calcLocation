@@ -1,4 +1,4 @@
-package uk.gov.dvla.osg.calclocation.models;
+package uk.gov.dvla.osg.calclocation.location;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,16 +7,12 @@ import java.util.List;
 import uk.gov.dvla.osg.common.classes.Customer;
 
 
-public class BatchTypeGroup extends BatchType {
+public class BatchTypeGroup extends AbstractBatchType {
 	
 	private List<Integer> groupIDs = new ArrayList<Integer>();
 	
 	public BatchTypeGroup(String site) {
 		super(site);
-	}
-	
-	public void addGroupID(String groupID) {
-		increaseCount();
 	}
 
 	@Override

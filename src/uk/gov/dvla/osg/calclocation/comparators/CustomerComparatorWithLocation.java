@@ -1,4 +1,4 @@
-package uk.gov.dvla.osg.calclocation;
+package uk.gov.dvla.osg.calclocation.comparators;
 
 import java.util.Comparator;
 

@@ -1,4 +1,4 @@
-package uk.gov.dvla.osg.calclocation;
+package uk.gov.dvla.osg.calclocation.methods;
 
 import java.util.ArrayList;
 
@@ -6,13 +6,11 @@ import uk.gov.dvla.osg.common.classes.Customer;
 
 public class TotalPagesInGroup {
 	
-	//private static final Logger LOGGER = LogManager.getLogger();
 	private ArrayList<Customer> group = new ArrayList<Customer>();
 	private int pageInGroupCount;
 	
 	public void calculate(ArrayList<Customer> customers) {
 		for (Customer customer : customers) {
-			//Calculate total pages in group
 			pageInGroupCount += customer.getNoOfPages();
 			group.add(customer);
 			calcTotalPagesInGroup(customer.isEog());

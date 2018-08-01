@@ -1,4 +1,4 @@
-package uk.gov.dvla.osg.calclocation.models;
+package uk.gov.dvla.osg.calclocation.engine;
 
 import java.util.ArrayList;
 
