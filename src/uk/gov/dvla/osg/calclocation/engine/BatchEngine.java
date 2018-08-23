@@ -45,6 +45,11 @@ public class BatchEngine {
 	private PresentationConfiguration presConfig;
 	private ProductionConfiguration prodConfig;
 	
+	/**
+	 * Instantiates a new batch engine.
+	 * @param tenDigitJid the RPD jid
+	 * @param eightDigitJid the IPW jid
+	 */
 	public BatchEngine(int tenDigitJid, int eightDigitJid) {
 		LOGGER.trace("Starting Batch Engine");
 		this.eightDigitJid = eightDigitJid;
@@ -310,8 +315,8 @@ public class BatchEngine {
 		for (Customer customer : allCustomers) {
 			double weight = 0;
 			double size = 0;
+			// Multi Customer - volume OK to send via UK Mail
 			if (MULTI.equals(customer.getBatchType()) && mscLookup.get(customer.getTransactionID()).getGroupCount() >= minimumTrayVolume) {
-				// Multi Customer - over volume
 				if (!customer.isEog()) {
 					weight += customer.getWeight();
 					size += customer.getSize();
@@ -326,6 +331,7 @@ public class BatchEngine {
 					double envelopeWeight = envelopeLookup.get(customer.getEnvelope()).getWeight();
 					double insertSize = 0;
 					double insertWeight = 0;
+					// Check if an insert is required.
 					if (StringUtils.isNotBlank(customer.getInsertRef())) {
 						insertSize = insertLookup.get(customer.getInsertRef()).getThickness();
 						insertWeight = insertLookup.get(customer.getInsertRef()).getWeight();
@@ -335,6 +341,7 @@ public class BatchEngine {
 
 				}
 			} else if (MULTI.equals(customer.getBatchType())) {
+			    // Multi Customer - volume below tray limit so send as Single instead
 				//Sorted if MailMark product & switched on in config file - PB 24/04/18
 				if (!prodConfig.getSite(FullBatchType.valueOf(SORTED + customer.getLang().name())).equals("X")) {
 					customer.setBatchType(SORTED);
@@ -448,11 +455,11 @@ public class BatchEngine {
 	}
 
 	/**
-	 * Batch max is increased by the value of the multiplier when docs are folded.
-	 * @param fullBatchType
-	 * @param paperSize
-	 * @return
-	 */
+	* Batch max is increased by the value of the multiplier when docs are folded.
+	* @param fullBatchType
+	* @param paperSize
+	* @return
+	*/
 	private int getBatchMax(FullBatchType fullBatchType, String paperSize) {
 		int batchmax = ProductionConfiguration.getInstance().getBatchMax(fullBatchType);
 		return papersizeLookup.containsKey(paperSize)
