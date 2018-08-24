@@ -9,7 +9,7 @@ import uk.gov.dvla.osg.common.classes.Customer;
 
 public abstract class AbstractBatchType {
 	
-	private static final Logger LOGGER = LogManager.getLogger();
+	static final Logger LOGGER = LogManager.getLogger();
 
 	// Set in config file
 	protected double percentToFf;
@@ -31,7 +31,7 @@ public abstract class AbstractBatchType {
 		} else if (StringUtils.isNumeric(site)) {
 			this.percentToFf = Double.parseDouble(site) / 100;
 		} else {
-			LOGGER.warn("Invalid site entry in lookup file! Site is '{}'", site);
+			//LOGGER.warn("Invalid site entry in lookup file! Site is '{}'", site);
 		}
 	}
 	
