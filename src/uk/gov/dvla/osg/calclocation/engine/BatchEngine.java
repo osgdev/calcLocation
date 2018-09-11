@@ -62,7 +62,7 @@ public class BatchEngine {
 		envelopeLookup = EnvelopeLookup.getInstance();
 		insertLookup = InsertLookup.getInstance();
 
-		maxTraySize = ProductionConfiguration.getInstance().getTraySize();
+		maxTraySize = prodConfig.getTraySize();
 		minimumTrayVolume = PostageConfiguration.getInstance().getUkmMinimumTrayVolume();
 		maxTrayWeight = PostageConfiguration.getInstance().getMaxTrayWeight();
 		ukmBatchTypes = PostageConfiguration.getInstance().getUkmBatchTypes();
@@ -118,10 +118,9 @@ public class BatchEngine {
 				ArrayList<Tray> trays = setTraysForMsc(customerIndex, endIndex);
 				adjustTrays(trays);
 			} else if (!changeOfMsc && !prev.equals(customer)) {
-	             // NEW BATCH
+			    // Same MSC, different Stationery or Transaction Type
                 pageCount = 0;
                 customer.setSob();
-                // Same MSC, different Stationery or Transaction Type
                 ArrayList<Tray> trays = setTraysForMsc(customerIndex, endIndex);
                 adjustTrays(trays);
 			} else {
@@ -174,10 +173,16 @@ public class BatchEngine {
 			
 			pid++;
 		}
+		
+	      ukMailCustomers.forEach(c -> LOGGER.debug(c.toString()));
 	}
 
 	/**
-	 * Loop throuh all customers in the given range, ensuring that they are within the limits of trayWeight and traySize. When limits are reached a new tray is started. When the batchMax is reached a new batch and new tray is started. Note - changing trays when a limit is reached could lead to a tray being under the minimum volume required by UK Mail. This scenario is handled in the adjustTrays method.
+	 * Loop throuh all customers in the given range, ensuring that they are within the limits of trayWeight and traySize. 
+	 * When limits are reached a new tray is started. 
+	 * When the batchMax is reached a new batch and new tray is started. 
+	 * Note - changing trays when a limit is reached could lead to a tray being under the minimum volume required by UK Mail. 
+	 * This scenario is handled in the adjustTrays method.
 	 * @param startIndex - first customer with MSC
 	 * @param endIndex - final customer with MSC
 	 * @return - all customers for the range divided into trays
@@ -282,7 +287,7 @@ public class BatchEngine {
 		} else {
 			// Trays don't need adjusting - check for SOB
 			boolean restartPageCount = false;
-			
+
 			for (int trayIdx = 0; trayIdx < trays.size(); trayIdx++) {
 				for (Customer customer : trays.get(trayIdx).getList()) {
 					if (customer.isSob()) {
@@ -323,9 +328,9 @@ public class BatchEngine {
 				} else {
 					// change envelope
 					if (customer.getLang().equals(Language.E)) {
-						customer.setEnvelope(ProductionConfiguration.getInstance().getEnvelopeEnglishMm());
+						customer.setEnvelope(prodConfig.getEnvelopeEnglishMm());
 					} else {
-						customer.setEnvelope(ProductionConfiguration.getInstance().getEnvelopeWelshMm());
+						customer.setEnvelope(prodConfig.getEnvelopeWelshMm());
 					}
 					double envelopeSize = envelopeLookup.get(customer.getEnvelope()).getThickness();
 					double envelopeWeight = envelopeLookup.get(customer.getEnvelope()).getWeight();
@@ -355,9 +360,9 @@ public class BatchEngine {
 				customer.setPresentationPriority(presConfig.lookupRunOrder(customer.getBatchName()));
 				// change envelope
 				if (customer.getLang().equals(Language.E)) {
-					customer.setEnvelope(ProductionConfiguration.getInstance().getEnvelopeEnglishMm());
+					customer.setEnvelope(prodConfig.getEnvelopeEnglishMm());
 				} else {
-					customer.setEnvelope(ProductionConfiguration.getInstance().getEnvelopeWelshMm());
+					customer.setEnvelope(prodConfig.getEnvelopeWelshMm());
 				}
 				double envelopeSize = envelopeLookup.get(customer.getEnvelope()).getThickness();
 				double envelopeWeight = envelopeLookup.get(customer.getEnvelope()).getWeight();
@@ -369,7 +374,7 @@ public class BatchEngine {
 				}
 				customer.setWeight(customer.getWeight() + weight + envelopeWeight + insertWeight);
 				customer.setSize(customer.getSize() + size + envelopeSize + insertSize);
-				customer.setSite(ProductionConfiguration.getInstance().getSite(customer.getFullBatchType()));
+				customer.setSite(prodConfig.getSite(customer.getFullBatchType()));
 			}
 
 		}

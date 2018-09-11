@@ -47,6 +47,7 @@ public class Main {
             DpfParser dpf = new DpfParser(inputFile, outputFile);
             LOGGER.trace("Loading customers...");
             ArrayList<Customer> customers = dpf.Load();
+            
             // Load Selector Lookup & Production Config files
             LOGGER.trace("Loading Lookup Files...");
             String selRef = customers.get(0).getSelectorRef();
