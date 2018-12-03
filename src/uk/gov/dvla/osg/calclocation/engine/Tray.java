@@ -18,12 +18,21 @@ public class Tray {
 		list.add(customer);
 		setSot = false;
 	}
+
+	public Tray(Group customer) {
+	    customer.setSot();
+	    this.size += customer.getSize();
+	    this.weight += customer.getWeight();
+	    list.addAll(customer.getList());
+	    setSot = false;
+	}
 	
 	public Tray() {
 		setSot = true;
 	}
 	
-	public int getNoItems() {
+
+    public int getNoItems() {
 		return list.size();
 	}
 	
@@ -57,5 +66,15 @@ public class Tray {
 	public void removeItem() {
 		list.remove(list.size() -1);
 	}
+
+    public void addItem(Group customer) {
+        if (setSot) {
+            customer.setSot();
+            setSot = false;
+        }
+        this.size += customer.getSize();
+        this.weight += customer.getWeight();
+        list.addAll(customer.getList());
+    }
 
 }

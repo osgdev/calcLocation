@@ -174,7 +174,7 @@ public class BatchEngine {
 			pid++;
 		}
 		
-	      ukMailCustomers.forEach(c -> LOGGER.debug(c.toString()));
+	      //ukMailCustomers.stream().filter(c -> c.isEog()).forEach(c -> LOGGER.debug(c.toString()));
 	}
 
 	/**
@@ -194,7 +194,18 @@ public class BatchEngine {
 		// NEW MSC start fresh tray
 		Tray tray = new Tray();
 		
+		List<Group> envelopes = new ArrayList<>();
+		Group group = new Group();
+		
 		for (Customer customer : ukMailCustomers.subList(startIndex, endIndex)) {
+		    group.add(customer);
+		    if (customer.isEog()) {
+		        envelopes.add(group);
+		        group = new Group();
+		    }
+		}
+		
+		for (Group customer : envelopes) {
 			if (customer.getNoOfPages() + pageCount <= batchMax) {
 				// Same Batch - check if weight and size would put tray over limits
 				if (customer.getSize() + tray.getSize() > maxTraySize
