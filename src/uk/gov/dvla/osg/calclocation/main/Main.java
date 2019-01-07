@@ -20,6 +20,7 @@ import uk.gov.dvla.osg.common.classes.Customer;
 import uk.gov.dvla.osg.common.classes.Selector;
 import uk.gov.dvla.osg.common.config.*;
 import uk.gov.dvla.osg.common.enums.BatchType;
+import uk.gov.dvla.osg.royalmail.resources.CreateRoyalMailResources;
 import uk.gov.dvla.osg.ukmail.resources.CreateUkMailResources;
 
 public class Main {
@@ -77,18 +78,37 @@ public class Main {
              */
             LOGGER.trace("Sorting input...");
             sortCustomers(customers, new CustomerComparatorWithLocation());
-            // Set MSC to 99999 on Unsorted to enable batching and tray sorting
-            LOGGER.trace("Adding temp MSC to UNSORTED...");
-            setMscOnUnsorted(customers);
+            
+            String mailProvider = PostageConfiguration.getInstance().getMailProvider();
+            
+            // Exclude UNSORTED items when provider is Royal Mail
+            if (!"RM".equalsIgnoreCase(mailProvider)) {
+                // Set MSC to 99999 on Unsorted to enable batching and tray sorting
+                LOGGER.trace("Adding temp MSC to UNSORTED...");
+                setMscOnUnsorted(customers);
+            }
+            
             // Putting into batches that are above the 25 tray minimum
             LOGGER.trace("Running Batch Engine...");
             BatchEngine be = new BatchEngine(tenDigitJid, eightDigitJid);
             be.batch(customers);
-            LOGGER.trace("Creating UkMail Resources...");
-            CreateUkMailResources ukm = new CreateUkMailResources(customers, runNo);
-            ukm.method();
-            // Remove the 99999 MSC that was set on Unsorted
-            removeMscOnUnsorted(customers);
+            
+            // Royal Mail & Uk Mail require different data for Consignor and SOAP files
+            if ("RM".equalsIgnoreCase(mailProvider)) {
+                LOGGER.trace("Creating Royal Mail Resources...");
+                CreateRoyalMailResources rmResources = new CreateRoyalMailResources(runNo);
+                rmResources.method(customers);
+            } else {
+                LOGGER.trace("Creating UkMail Resources...");
+                CreateUkMailResources ukm = new CreateUkMailResources(customers, runNo);
+                ukm.method();
+            }
+            
+            if (!"RM".equalsIgnoreCase(mailProvider)) {
+                LOGGER.trace("Removing temp MSC's from UNSORTED...");
+                removeMscOnUnsorted(customers);
+            }
+
             // Return to original order to map records row by row
             LOGGER.trace("Sorting back to original order...");
             sortCustomers(customers, new CustomerComparatorOriginalOrder());
@@ -161,40 +181,37 @@ public class Main {
 
         AppConfig appConfig = AppConfig.getInstance();
         SelectorLookup.init(appConfig.getLookupFile());
-        Selector selector = null;
 
-        if (SelectorLookup.getInstance().isPresent(selRef)) {
-            selector = SelectorLookup.getInstance().getSelector(selRef);
-        } else {
+        if (!SelectorLookup.getInstance().isPresent(selRef)) {
             LOGGER.fatal("Selector [{}] is not present in the lookupFile.", selRef);
             System.exit(1);
         }
+        
+        Selector selector = SelectorLookup.getInstance().getSelector(selRef);
 
         String prodConfigFile = appConfig.getProductionConfigPath() + selector.getProductionConfig() + appConfig.getProductionFileSuffix();
-        if (new File(prodConfigFile).isFile()) {
-            ProductionConfiguration.init(prodConfigFile);
-        } else {
+       
+        if (!new File(prodConfigFile).isFile()) {
             LOGGER.fatal("Production Configuration File [{}] doesn't exist on the filepath.", prodConfigFile);
             System.exit(1);
-        }
+        }        
 
         String postConfigFile = appConfig.getPostageConfigPath() + selector.getPostageConfig() + appConfig.getPostageFileSuffix();
-        if (new File(postConfigFile).isFile()) {
-            PostageConfiguration.init(postConfigFile);
-        } else {
+       
+        if (!new File(postConfigFile).isFile()) {
             LOGGER.fatal("Postage Configuration File [{}] doesn't exist on the filepath.", postConfigFile);
             System.exit(1);
         }
-
-       
+        
         String presConfigFile = appConfig.getPresentationPriorityConfigPath() + selector.getPresentationConfig() + appConfig.getPresentationPriorityFileSuffix();
-        if (new File(presConfigFile).isFile()) {
-            PresentationConfiguration.init(presConfigFile);
-        } else {
+        if (!new File(presConfigFile).isFile()) {
             LOGGER.fatal("Presentation Configuration File [{}] doesn't exist on the filepath.", presConfigFile);
             System.exit(1);
         }
-        
+
+        ProductionConfiguration.init(prodConfigFile);
+        PostageConfiguration.init(postConfigFile);
+        PresentationConfiguration.init(presConfigFile);
         InsertLookup.init(appConfig.getInsertLookup());
         EnvelopeLookup.init(appConfig.getEnvelopeLookup());
         PapersizeLookup.init(appConfig.getPapersizeLookup());
