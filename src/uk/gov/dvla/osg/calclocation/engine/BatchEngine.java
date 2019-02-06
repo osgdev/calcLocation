@@ -366,23 +366,30 @@ public class BatchEngine {
 					customer.setProduct(Product.UNSORTED);
 					customer.setMsc("99999");
 				}
+				
+				customer.setTotalPagesInGroup(customer.getNoOfPages());
 				customer.setEog();
+				
 				customer.setGroupId(null);
 				customer.setPresentationPriority(presConfig.lookupRunOrder(customer.getBatchName()));
+				
 				// change envelope
 				if (customer.getLang().equals(Language.E)) {
 					customer.setEnvelope(prodConfig.getEnvelopeEnglishMm());
 				} else {
 					customer.setEnvelope(prodConfig.getEnvelopeWelshMm());
 				}
+				
 				double envelopeSize = envelopeLookup.get(customer.getEnvelope()).getThickness();
 				double envelopeWeight = envelopeLookup.get(customer.getEnvelope()).getWeight();
 				double insertSize = 0;
 				double insertWeight = 0;
+				
 				if (StringUtils.isNotBlank(customer.getInsertRef())) {
 					insertSize = insertLookup.get(customer.getInsertRef()).getThickness();
 					insertWeight = insertLookup.get(customer.getInsertRef()).getWeight();
 				}
+				
 				customer.setWeight(customer.getWeight() + weight + envelopeWeight + insertWeight);
 				customer.setSize(customer.getSize() + size + envelopeSize + insertSize);
 				customer.setSite(prodConfig.getSite(customer.getFullBatchType()));
