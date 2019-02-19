@@ -160,12 +160,14 @@ public class BatchEngine {
 		// Loop through all customers and set JID's, PID & batch sequence
 		int pid = 1;
 		int batchSequence = 0;
+		
 		for (Customer customer : customers) {
 			if (customer.isSob()) {
 				pid = 1;
 				batchSequence++;
 				tenDigitJid += jidInc;
 			}
+			
 			customer.setSequenceInChild(pid);
 			customer.setTenDigitJid(tenDigitJid);
 			customer.setEightDigitJid(eightDigitJid);
@@ -358,7 +360,7 @@ public class BatchEngine {
 				}
 			} else if (MULTI.equals(customer.getBatchType())) {
 			    // Multi Customer - volume below tray limit so send as Single instead
-				//Sorted if MailMark product & switched on in config file - PB 24/04/18
+				// Sorted if MailMark product & switched on in config file - PB 24/04/18
 				if (!prodConfig.getSite(FullBatchType.valueOf(SORTED + customer.getLang().name())).equals("X")) {
 					customer.setBatchType(SORTED);
 				} else {
@@ -367,32 +369,36 @@ public class BatchEngine {
 					customer.setMsc("99999");
 				}
 				
-				customer.setTotalPagesInGroup(customer.getNoOfPages());
-				customer.setEog();
-				
-				customer.setGroupId(null);
 				customer.setPresentationPriority(presConfig.lookupRunOrder(customer.getBatchName()));
-				
-				// change envelope
-				if (customer.getLang().equals(Language.E)) {
-					customer.setEnvelope(prodConfig.getEnvelopeEnglishMm());
-				} else {
-					customer.setEnvelope(prodConfig.getEnvelopeWelshMm());
-				}
-				
-				double envelopeSize = envelopeLookup.get(customer.getEnvelope()).getThickness();
-				double envelopeWeight = envelopeLookup.get(customer.getEnvelope()).getWeight();
-				double insertSize = 0;
-				double insertWeight = 0;
-				
-				if (StringUtils.isNotBlank(customer.getInsertRef())) {
-					insertSize = insertLookup.get(customer.getInsertRef()).getThickness();
-					insertWeight = insertLookup.get(customer.getInsertRef()).getWeight();
-				}
-				
-				customer.setWeight(customer.getWeight() + weight + envelopeWeight + insertWeight);
-				customer.setSize(customer.getSize() + size + envelopeSize + insertSize);
 				customer.setSite(prodConfig.getSite(customer.getFullBatchType()));
+
+				// PB 19/02/19 - envelope type changed from MM to UNSORTED
+                if (customer.getLang().equals(Language.E)) {
+                    customer.setEnvelope(prodConfig.getEnvelopeEnglishUnsorted());
+                } else {
+                    customer.setEnvelope(prodConfig.getEnvelopeWelshUnsorted());
+                }
+                
+                
+                double envelopeSize = envelopeLookup.get(customer.getEnvelope()).getThickness();
+                double envelopeWeight = envelopeLookup.get(customer.getEnvelope()).getWeight();
+                double insertSize = 0;
+                double insertWeight = 0;
+                
+                if (StringUtils.isNotBlank(customer.getInsertRef())) {
+                    insertSize = insertLookup.get(customer.getInsertRef()).getThickness();
+                    insertWeight = insertLookup.get(customer.getInsertRef()).getWeight();
+                }
+                
+                // PB 19/02/19 : Switch grouped items to singles when set in production config, otherwise leave as grouped
+                if (!prodConfig.isMultiUnsorted()) {
+                    customer.setGroupId(null);
+                    customer.setTotalPagesInGroup(customer.getNoOfPages());
+                    customer.setEog();
+                    customer.setWeight(customer.getWeight() + weight + envelopeWeight + insertWeight);
+                    customer.setSize(customer.getSize() + size + envelopeSize + insertSize);
+                }
+                
 			}
 
 		}

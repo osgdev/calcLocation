@@ -12,6 +12,7 @@ class BatchMapFactory {
     public static HashMap<FullBatchType, AbstractBatchType> newInstance() {
         HashMap<FullBatchType, AbstractBatchType> batchMap = new HashMap<>();
         ProductionConfiguration prodConfig = ProductionConfiguration.getInstance();
+        
         // Singles
         if (isNotIgnore(SORTEDE)) {
             batchMap.put(SORTEDE, new BatchTypeSingle(prodConfig.getSite(SORTEDE)));

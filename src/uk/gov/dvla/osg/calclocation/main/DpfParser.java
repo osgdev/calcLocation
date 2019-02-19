@@ -12,10 +12,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.univocity.parsers.common.processor.ConcurrentRowProcessor;
 import com.univocity.parsers.common.processor.RowListProcessor;
-import com.univocity.parsers.tsv.TsvParser;
-import com.univocity.parsers.tsv.TsvParserSettings;
-import com.univocity.parsers.tsv.TsvWriter;
-import com.univocity.parsers.tsv.TsvWriterSettings;
+import com.univocity.parsers.tsv.*;
 
 import uk.gov.dvla.osg.common.classes.Customer;
 
@@ -78,7 +75,7 @@ class DpfParser {
 			customer.setPostcode(record.getString(appConfig.getPostCodeField()));
 			
 			customer.setDps(record.getString(appConfig.getDpsField()));
-			customer.setMmCustomerContent(record.getString(appConfig.getMailMarkBarcodeCustomerContent()));
+			customer.setCustomerContent(record.getString(appConfig.getMailMarkBarcodeCustomerContent()));
 			customer.setNoOfPages(record.getInt(appConfig.getNoOfPagesField()));
 			//customer.setSot(record.getString(appConfig.getEotField()));
 			customer.setEog(record.getString(appConfig.getEogField()));
@@ -151,7 +148,7 @@ class DpfParser {
 					LOGGER.fatal("MailMarkBarcodeContent {}", appConfig.getMailMarkBarcodeContent());
 				}
 				try {
-					writer.addValue(appConfig.getMailMarkBarcodeCustomerContent(), customer.getMmCustomerContent());
+					writer.addValue(appConfig.getMailMarkBarcodeCustomerContent(), customer.getCustomerContent());
 				} catch (Exception ex) {
 					LOGGER.fatal("MailMark Customer Content {}", appConfig.getMailMarkBarcodeCustomerContent());
 				}
