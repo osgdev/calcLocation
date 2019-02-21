@@ -13,7 +13,7 @@ public class CalculateEndOfGroups {
 		int pageCount = 0;
 		int maxPages = 0;
 		int nextCustIdx = 0;
-		ProductionConfiguration pc = ProductionConfiguration.getInstance();
+		ProductionConfiguration prodConfig = ProductionConfiguration.getInstance();
 		
 		for (int curCustIdx = 0; curCustIdx < input.size(); curCustIdx++) {
 		    
@@ -21,7 +21,9 @@ public class CalculateEndOfGroups {
 				nextCustIdx = curCustIdx + 1;
 				currentCustomer = input.get(curCustIdx);
 				nextCustomer = input.get(nextCustIdx);
-				maxPages = pc.getGroupMax(currentCustomer.getFullBatchType());
+				
+				maxPages = prodConfig.getGroupMax(currentCustomer.getFullBatchType());
+				
 				// Calculate EOG's on groups only, set EOG marker on all singles
 				if (currentCustomer.getGroupId() != null) {
 				    // Check if customers belong to same group, if not set EOG on the current customer

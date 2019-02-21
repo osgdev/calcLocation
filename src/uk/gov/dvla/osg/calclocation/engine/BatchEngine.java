@@ -363,23 +363,28 @@ public class BatchEngine {
 				// Sorted if MailMark product & switched on in config file - PB 24/04/18
 				if (!prodConfig.getSite(FullBatchType.valueOf(SORTED + customer.getLang().name())).equals("X")) {
 					customer.setBatchType(SORTED);
+					customer.setPresentationPriority(presConfig.lookupRunOrder("SORTED"));
+	                // PB 19/02/19 - envelope type changed to MM
+                    if (customer.getLang().equals(Language.E)) {
+                        customer.setEnvelope(prodConfig.getEnvelopeEnglishMm());
+                    } else {
+                        customer.setEnvelope(prodConfig.getEnvelopeWelshMm());
+                    }
 				} else {
 					customer.setBatchType(UNSORTED);
+					customer.setPresentationPriority(presConfig.lookupRunOrder("UNSORTED"));
 					customer.setProduct(Product.UNSORTED);
 					customer.setMsc("99999");
+		            // PB 19/02/19 - envelope type changed from MM to UNSORTED
+	                if (customer.getLang().equals(Language.E)) {
+	                    customer.setEnvelope(prodConfig.getEnvelopeEnglishUnsorted());
+	                } else {
+	                    customer.setEnvelope(prodConfig.getEnvelopeWelshUnsorted());
+	                }
 				}
 				
-				customer.setPresentationPriority(presConfig.lookupRunOrder(customer.getBatchName()));
 				customer.setSite(prodConfig.getSite(customer.getFullBatchType()));
 
-				// PB 19/02/19 - envelope type changed from MM to UNSORTED
-                if (customer.getLang().equals(Language.E)) {
-                    customer.setEnvelope(prodConfig.getEnvelopeEnglishUnsorted());
-                } else {
-                    customer.setEnvelope(prodConfig.getEnvelopeWelshUnsorted());
-                }
-                
-                
                 double envelopeSize = envelopeLookup.get(customer.getEnvelope()).getThickness();
                 double envelopeWeight = envelopeLookup.get(customer.getEnvelope()).getWeight();
                 double insertSize = 0;
@@ -397,10 +402,11 @@ public class BatchEngine {
                     customer.setEog();
                     customer.setWeight(customer.getWeight() + weight + envelopeWeight + insertWeight);
                     customer.setSize(customer.getSize() + size + envelopeSize + insertSize);
+                    String msc = customer.getLang().name() + customer.getBatchType().name() + customer.getSubBatch() + customer.getMsc();
+                    LOGGER.debug("Groups in UNSORTED switched on in config. MULTI changed  to {} & Group ID kept for customer with MSC {}", customer.getBatchName(), msc);
                 }
                 
 			}
-
 		}
 	}
 

@@ -1,7 +1,9 @@
 package uk.gov.dvla.osg.calclocation.main;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -18,6 +20,7 @@ import uk.gov.dvla.osg.calclocation.methods.CalculateEndOfGroups;
 import uk.gov.dvla.osg.calclocation.methods.TotalPagesInGroup;
 import uk.gov.dvla.osg.common.classes.Customer;
 import uk.gov.dvla.osg.common.classes.Selector;
+import uk.gov.dvla.osg.common.classes.Utils;
 import uk.gov.dvla.osg.common.config.*;
 import uk.gov.dvla.osg.common.enums.BatchType;
 import uk.gov.dvla.osg.ukmail.resources.CreateUkMailResources;
@@ -45,16 +48,21 @@ public class Main {
             // load customers from dpf file
             LOGGER.trace("Initialising DPF Parser...");
             DpfParser dpf = new DpfParser(inputFile, outputFile);
-            LOGGER.trace("Loading customers...");
+            LOGGER.trace("Loading customers from {}...", inputFile);
             ArrayList<Customer> customers = dpf.Load();
+            // Summary Print to check batch volumes before and after
+            String summaryBefore = Utils.summaryPrint(customers);
+            LOGGER.info(summaryBefore);
             
             // Load Selector Lookup & Production Config files
-            LOGGER.trace("Loading Lookup Files...");
             String selRef = customers.get(0).getSelectorRef();
+            LOGGER.trace("Loading Lookup Files For Selector {}...", selRef);
             loadLookupFiles(selRef);
+            
             // Sort Order: Language -> Presentation Priority
             LOGGER.trace("Sorting input...");
             sortCustomers(customers, new CustomerComparator());
+            
             // Calculate sites for every customer
             LOGGER.trace("Starting CalcLocation...");
             LocationCalculator calculateLocation = new LocationCalculator();
@@ -66,12 +74,14 @@ public class Main {
              */
             LOGGER.trace("Sorting input...");
             sortCustomers(customers, new CustomerComparatorWithLocation());
+            
             // Calculate EOGs ready for the batch engine
             LOGGER.trace("Calculating EOGs...");
             CalculateEndOfGroups eogs = new CalculateEndOfGroups();
             eogs.calculate(customers);
             TotalPagesInGroup tpig = new TotalPagesInGroup();
             tpig.calculate(customers);
+            
             /*
              * Sort order: LOCATION -> LANGUAGE -> STATIONERY -> PRESENTATION_ORDER -> SUB_BATCH -> SORT_FIELD -> FLEET_NO -> MSC -> GRP_ID
              */
@@ -96,8 +106,9 @@ public class Main {
             LOGGER.trace("Saving DPF file...");
             dpf.Save(customers);
             LOGGER.trace("Data saved to: {}", outputFile);
-            String summary = summaryPrint(customers);
-            LOGGER.debug(summary);
+            // Summary Print to check batch volumes before and after
+            String summaryAfter = Utils.summaryPrint(customers);
+            LOGGER.info(summaryAfter);
         } catch (Exception ex) {
             LOGGER.fatal(ExceptionUtils.getStackTrace(ex));
             System.exit(1);
@@ -215,19 +226,26 @@ public class Main {
     }
 
     private static void removeMscOnUnsorted(ArrayList<Customer> customers) {
-        customers.stream().filter(customer -> BatchType.UNSORTED.equals(customer.getBatchType()))
-                .forEach(customer -> customer.setMsc(""));
+        customers.stream()
+                 .filter(customer -> BatchType.UNSORTED.equals(customer.getBatchType()))
+                 .forEach(customer -> customer.setMsc(""));
     }
 
     /**
-     * Prints a summary of the number of items for each batch type.
+     * Prints a summary of the number of items for each batch type by item and by group
      * @param docProps
      */
     private static String summaryPrint(ArrayList<Customer> customers) {
-        Map<String, Long> counting = customers.stream()
-                .collect(Collectors.groupingBy(Customer::getFullBatchName, Collectors.counting()));
+        String customerCount = customers.stream()
+                                        .collect(Collectors.groupingBy(Customer::getFullBatchName, Collectors.counting()))
+                                        .toString();
 
-        return counting.toString();
+        String groupCount = customers.stream()
+                                     .filter(item -> item.isEog())
+                                     .collect(Collectors.groupingBy(Customer::getFullBatchName, Collectors.counting()))
+                                     .toString();
+        
+        return String.format("Customer Summary {}, Group Summary {}", customerCount, groupCount);
     }
 
 }
