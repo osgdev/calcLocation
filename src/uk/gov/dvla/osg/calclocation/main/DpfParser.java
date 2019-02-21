@@ -6,18 +6,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.LoggerContext;
 
 import com.univocity.parsers.common.processor.ConcurrentRowProcessor;
 import com.univocity.parsers.common.processor.RowListProcessor;
 import com.univocity.parsers.tsv.*;
 
 import uk.gov.dvla.osg.common.classes.Customer;
+import uk.gov.dvla.osg.common.classes.Utils;
 
 class DpfParser {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -210,12 +208,9 @@ class DpfParser {
             });
             // Flushes and closes the writer
             writer.close();
-            // PB 21/02/19 : Archive a copy of the output DPF when Log4J level set to TRACE
-            Level oldLevel = ((LoggerContext) LogManager.getContext(false)).getConfiguration().getLoggerConfig(LOGGER.getName()).getLevel();
-            if (oldLevel.equals(Level.TRACE)) {
-                FileUtils.copyFile(new File(outputFile), new File(outputFile + "CalcLocation.bak"));
-            }
         }
+        // PB 21/02/19 : Archive a copy of the output DPF when Log4J level set to TRACE
+        Utils.archiveDpf(outputFile, "CalcLocation.bak", LOGGER);
     }
 
     /**
